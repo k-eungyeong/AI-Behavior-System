@@ -20,3 +20,4 @@ requests
 
 python-jose[cryptography]
 opencv-python-headless
+psycopg2-binary
