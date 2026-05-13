@@ -59,3 +59,7 @@ def database_health():
     return {
         "database": engine.url.get_backend_name()
     }
+
+@app.get("/db-health")
+def db_health_alias():
+    return database_health()
