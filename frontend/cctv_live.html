@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>실시간 CCTV 확인 - AI 이상행동 감지 시스템</title>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body { width: 100%; height: 100%; }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f4;
+      color: #202123;
+      overflow: hidden;
+    }
+
+    .page {
+      width: 100%;
+      height: 100vh;
+      margin: 0;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow: hidden;
+    }
+
+    .navbar {
+      min-height: 66px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 16px 22px;
+      border: 1px solid #deded8;
+      border-radius: 18px;
+      background: #ffffff;
+      box-shadow: 0 16px 40px rgba(17, 24, 39, 0.08);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: #111827;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .nav-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+
+    .nav-subtitle {
+      margin-top: 3px;
+      font-size: 13px;
+      color: #6b6f76;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 1px solid #deded8;
+      border-radius: 11px;
+      background: #ffffff;
+      color: #202123;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    button:hover {
+      background: #f1f1ee;
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(17, 24, 39, 0.12);
+    }
+
+    button:disabled {
+      color: #9ca3af;
+      background: #f1f1ee;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .primary-btn {
+      border-color: #111827;
+      background: #111827;
+      color: white;
+    }
+
+    .primary-btn:hover { background: #2f343d; }
+
+    .hero {
+      flex-shrink: 0;
+      padding: 14px 4px 2px;
+    }
+
+    .eyebrow {
+      margin-bottom: 10px;
+      color: #6b6f76;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .title {
+      font-size: clamp(24px, 3vw, 35px);
+      line-height: 1.12;
+      letter-spacing: -1px;
+      font-weight: 800;
+    }
+
+    .subtitle {
+      margin-top: 10px;
+      color: #6b6f76;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .workspace {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 18px;
+      overflow: hidden;
+    }
+
+    .card {
+      min-height: 0;
+      border: 1px solid #deded8;
+      border-radius: 22px;
+      background: #ffffff;
+      box-shadow: 0 20px 60px rgba(17, 24, 39, 0.08);
+      padding: 20px;
+      overflow: hidden;
+    }
+
+    .side-card {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .viewer-card {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .section-head {
+      margin-bottom: 14px;
+      flex-shrink: 0;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .section-desc {
+      margin-top: 6px;
+      color: #6b6f76;
+      font-size: 14px;
+      line-height: 1.45;
+      word-break: keep-all;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #5f6368;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    select {
+      width: 100%;
+      height: 44px;
+      border: 1px solid #d8d8d0;
+      border-radius: 12px;
+      background: white;
+      color: #202123;
+      padding: 0 13px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    #webcam {
+      display: block;
+      width: 100%;
+      flex: 1;
+      min-height: 320px;
+      object-fit: cover;
+      border: 1px solid #202123;
+      border-radius: 18px;
+      background: #111827;
+    }
+
+    .status-text, .realtime-box {
+      color: #6b6f76;
+      font-size: 14px;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    .realtime-box {
+      margin-top: 14px;
+      padding: 14px;
+      border: 1px solid #e5e5df;
+      border-radius: 16px;
+      background: #fbfbf8;
+      color: #202123;
+      flex-shrink: 0;
+    }
+
+    .danger-toast {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 9999;
+      width: min(360px, calc(100vw - 32px));
+      padding: 18px;
+      border: 1px solid #fecaca;
+      border-radius: 18px;
+      background: #fef2f2;
+      color: #991b1b;
+      box-shadow: 0 20px 50px rgba(17, 24, 39, 0.18);
+      animation: slideIn 0.3s ease;
+    }
+
+    .danger-toast-title {
+      margin-bottom: 10px;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .danger-toast-body {
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(120%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    @media (max-width: 900px) {
+      body { overflow: auto; }
+      .page {
+        height: auto;
+        min-height: 100vh;
+        overflow: visible;
+      }
+      .navbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+      .nav-actions { justify-content: flex-start; }
+      .workspace {
+        grid-template-columns: 1fr;
+        overflow: visible;
+      }
+      #webcam { min-height: 260px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="dangerToast" class="danger-toast" style="display:none;">
+    <div class="danger-toast-title">실시간 위험 감지</div>
+    <div id="dangerToastBody" class="danger-toast-body"></div>
+  </div>
+
+  <div class="page">
+    <nav class="navbar">
+      <div class="nav-brand">
+        <div class="brand-mark">AI</div>
+        <div>
+          <div class="nav-title">실시간 CCTV 확인</div>
+          <div class="nav-subtitle" id="userInfo">로그인 확인 중입니다.</div>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <button id="mainBtn">메인</button>
+        <button id="cctvSettingsBtn" style="display:none;">CCTV 설정</button>
+        <button id="adminBtn" style="display:none;">관리자 대시보드</button>
+        <button id="logoutBtn">로그아웃</button>
+      </div>
+    </nav>
+
+    <section class="hero">
+      <div class="eyebrow">Realtime Console</div>
+      <h1 class="title">실시간 CCTV 분석</h1>
+      <p class="subtitle">선택한 CCTV 정보를 기준으로 웹캠 화면을 분석하고 위험 물체 감지 결과를 확인합니다.</p>
+    </section>
+
+    <main class="workspace">
+      <section class="card side-card">
+        <div>
+          <div class="section-title">CCTV 선택</div>
+          <p class="section-desc">등록된 활성 CCTV 중 분석 대상 카메라를 선택합니다.</p>
+        </div>
+
+        <div>
+          <label for="cameraSelect">CCTV</label>
+          <select id="cameraSelect">
+            <option value="">CCTV 목록을 불러오는 중입니다.</option>
+          </select>
+        </div>
+
+        <div class="button-row">
+          <button class="primary-btn" id="startWebcamBtn">웹캠 시작</button>
+          <button id="stopWebcamBtn" disabled>웹캠 중지</button>
+        </div>
+
+        <div class="status-text" id="webcamStatus">웹캠 대기 중</div>
+      </section>
+
+      <section class="card viewer-card">
+        <div class="section-head">
+          <div class="section-title">실시간 화면</div>
+          <p class="section-desc">감지 결과가 발생하면 아래 결과 영역과 알림으로 표시됩니다.</p>
+        </div>
+
+        <video id="webcam" autoplay playsinline></video>
+        <canvas id="canvas" style="display:none;"></canvas>
+        <div class="realtime-box" id="realtimeResult">실시간 감지 결과가 여기에 표시됩니다.</div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const BASE_URL = window.location.port === "5500" ? "http://127.0.0.1:8000" : window.location.origin;
+    const FRONT_LOGIN_URL = `${window.location.origin}/frontend/login.html`;
+
+    const accessToken = localStorage.getItem("accessToken");
+    const loggedInUserRaw = localStorage.getItem("loggedInUser");
+    const loggedInUser = loggedInUserRaw ? JSON.parse(loggedInUserRaw) : null;
+
+    if (!accessToken || !loggedInUser) {
+      alert("로그인이 필요합니다.");
+      window.location.href = FRONT_LOGIN_URL;
+    }
+
+    function authHeaders(extraHeaders = {}) {
+      return {
+        ...extraHeaders,
+        "Authorization": `Bearer ${accessToken}`
+      };
+    }
+
+    const userInfo = document.getElementById("userInfo");
+    const mainBtn = document.getElementById("mainBtn");
+    const cctvSettingsBtn = document.getElementById("cctvSettingsBtn");
+    const adminBtn = document.getElementById("adminBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const webcam = document.getElementById("webcam");
+    const canvas = document.getElementById("canvas");
+    const startWebcamBtn = document.getElementById("startWebcamBtn");
+    const stopWebcamBtn = document.getElementById("stopWebcamBtn");
+    const webcamStatus = document.getElementById("webcamStatus");
+    const realtimeResult = document.getElementById("realtimeResult");
+    const cameraSelect = document.getElementById("cameraSelect");
+    const dangerToast = document.getElementById("dangerToast");
+    const dangerToastBody = document.getElementById("dangerToastBody");
+
+    let webcamStream = null;
+    let realtimeInterval = null;
+    let isRealtimeRequestRunning = false;
+
+    if (loggedInUser) {
+      userInfo.textContent = `${loggedInUser.username} 로그인 중 (${loggedInUser.role})`;
+    }
+
+    if (loggedInUser && loggedInUser.role === "admin") {
+      cctvSettingsBtn.style.display = "inline-block";
+      adminBtn.style.display = "inline-block";
+    }
+
+
+    logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("loggedInUser");
+      alert("로그아웃 되었습니다.");
+      window.location.href = FRONT_LOGIN_URL;
+    });
+
+    mainBtn.addEventListener("click", () => {
+      window.location.href = "/frontend/index.html";
+    });
+
+    cctvSettingsBtn.addEventListener("click", () => {
+      window.location.href = "/frontend/cctv_settings.html";
+    });
+
+    adminBtn.addEventListener("click", () => {
+      window.location.href = "/frontend/admin.html";
+    });
+
+    async function loadCCTVList() {
+      try {
+        const response = await fetch(`${BASE_URL}/cctv/`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        });
+
+        const result = await response.json();
+
+        if (!result.success) return;
+
+        const cameras = result.data || [];
+
+        if (cameras.length === 0) {
+          cameraSelect.innerHTML = `<option value="">등록된 CCTV 없음</option>`;
+          return;
+        }
+
+        cameraSelect.innerHTML = cameras
+          .filter(camera => camera.is_active)
+          .map(camera => `
+            <option
+              value="${camera.id}"
+              data-name="${camera.camera_name}"
+              data-location="${camera.camera_location}"
+            >
+              ${camera.camera_name} - ${camera.camera_location}
+            </option>
+          `)
+          .join("");
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    async function sendRealtimeFrame() {
+      if (!webcamStream || isRealtimeRequestRunning) return;
+      if (!webcam.videoWidth || !webcam.videoHeight) return;
+
+      isRealtimeRequestRunning = true;
+
+      try {
+        const context = canvas.getContext("2d");
+
+        canvas.width = webcam.videoWidth;
+        canvas.height = webcam.videoHeight;
+        context.drawImage(webcam, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob(async (blob) => {
+          try {
+            if (!blob) {
+              realtimeResult.textContent = "프레임 생성 실패";
+              return;
+            }
+
+            const formData = new FormData();
+            formData.append("file", blob, "frame.jpg");
+
+            const selectedOption = cameraSelect.options[cameraSelect.selectedIndex];
+            const cameraName = selectedOption?.dataset?.name || "CAM-01";
+            const cameraLocation = selectedOption?.dataset?.location || "실시간 웹캠";
+
+            formData.append("camera_name", cameraName);
+            formData.append("camera_location", cameraLocation);
+
+            const response = await fetch(`${BASE_URL}/realtime/detect`, {
+              method: "POST",
+              headers: authHeaders(),
+              body: formData
+            });
+
+            if (response.status === 401 || response.status === 403) {
+              localStorage.removeItem("accessToken");
+              localStorage.removeItem("loggedInUser");
+              alert("로그인이 만료되었습니다. 다시 로그인해주세요.");
+              window.location.href = FRONT_LOGIN_URL;
+              return;
+            }
+
+            const data = await response.json();
+
+            if (!data.success) {
+              realtimeResult.textContent = `실시간 분석 오류: ${data.message}`;
+              return;
+            }
+
+            if (data.detections && data.detections.length > 0) {
+              realtimeResult.innerHTML = data.detections
+                .map(d => `${d.label} (${Number(d.confidence).toFixed(3)})`)
+                .join("<br>");
+
+              const detectedText = data.detections
+                .map(d => `${d.label} (${Number(d.confidence).toFixed(3)})`)
+                .join(", ");
+
+              showDangerPopup(
+                detectedText,
+                data.camera_name || "CAM-01",
+                data.camera_location || "실시간 웹캠"
+              );
+            } else {
+              realtimeResult.textContent = "감지 없음";
+            }
+          } catch (error) {
+            realtimeResult.textContent = `실시간 요청 오류: ${error.message}`;
+          } finally {
+            isRealtimeRequestRunning = false;
+          }
+        }, "image/jpeg");
+      } catch (error) {
+        realtimeResult.textContent = `프레임 처리 오류: ${error.message}`;
+        isRealtimeRequestRunning = false;
+      }
+    }
+
+    startWebcamBtn.addEventListener("click", async () => {
+      try {
+        webcamStream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false
+        });
+
+        webcam.srcObject = webcamStream;
+        webcamStatus.textContent = "웹캠 연결 완료. 실시간 감지 중입니다.";
+        realtimeResult.textContent = "실시간 감지 시작";
+
+        startWebcamBtn.disabled = true;
+        stopWebcamBtn.disabled = false;
+
+        realtimeInterval = setInterval(sendRealtimeFrame, 1000);
+      } catch (error) {
+        webcamStatus.textContent = `웹캠 오류: ${error.message}`;
+      }
+    });
+
+    stopWebcamBtn.addEventListener("click", () => {
+      if (realtimeInterval) {
+        clearInterval(realtimeInterval);
+        realtimeInterval = null;
+      }
+
+      if (webcamStream) {
+        webcamStream.getTracks().forEach(track => track.stop());
+        webcamStream = null;
+      }
+
+      webcam.srcObject = null;
+      webcamStatus.textContent = "웹캠 중지됨";
+      realtimeResult.textContent = "실시간 감지 대기 중";
+
+      startWebcamBtn.disabled = false;
+      stopWebcamBtn.disabled = true;
+      isRealtimeRequestRunning = false;
+    });
+
+    function showDangerPopup(detectedText, cameraName, cameraLocation) {
+      const now = new Date().toLocaleString("ko-KR");
+
+      dangerToastBody.innerHTML = `
+        <div><strong>감지 물체:</strong> ${detectedText}</div>
+        <div><strong>카메라:</strong> ${cameraName}</div>
+        <div><strong>위치:</strong> ${cameraLocation}</div>
+        <div><strong>시간:</strong> ${now}</div>
+        <div style="margin-top:10px;font-weight:700;">즉시 상황을 확인하세요.</div>
+      `;
+
+      dangerToast.style.display = "block";
+
+      setTimeout(() => {
+        dangerToast.style.display = "none";
+      }, 5000);
+    }
+
+    loadCCTVList();
+  </script>
+</body>
+</html>

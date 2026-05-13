@@ -1,6 +1,6 @@
 import os
 
-UPLOAD_DIR = "uploads"
+UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploads")
 
 
 def get_uploaded_file_path(video_id: str) -> str | None:

@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>회원가입 - AI 이상행동 감지 시스템</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f4;
+      color: #202123;
+    }
+
+    .page {
+      width: 100%;
+      height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      position: relative;
+    }
+
+    .center-divider {
+      position: absolute;
+      top: 10vh;
+      left: 50%;
+      width: 1px;
+      height: 80vh;
+      background: #d8d8d0;
+      transform: translateX(-50%);
+    }
+
+    .left-section {
+      padding: 56px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: #111827;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .intro {
+      max-width: none;
+      width: 100%;
+    }
+
+    .intro-tag {
+      font-size: 14px;
+      color: #8a8f98;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+      font-weight: 700;
+    }
+
+    .intro h1 {
+      font-size: clamp(48px, 4.2vw, 64px);
+      line-height: 1.08;
+      letter-spacing: -2px;
+      margin-bottom: 22px;
+      white-space: nowrap;
+    }
+
+    .intro p {
+      font-size: clamp(18px, 1.45vw, 22px);
+      line-height: 1.6;
+      color: #5f6368;
+      word-break: keep-all;
+      white-space: nowrap;
+    }
+
+    .system-card {
+      width: 100%;
+      max-width: 560px;
+      padding: 24px;
+      border: 1px solid #deded8;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.72);
+      box-shadow: 0 20px 60px rgba(17, 24, 39, 0.08);
+    }
+
+    .system-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid #e5e5df;
+      gap: 16px;
+    }
+
+    .system-row:last-child {
+      border-bottom: none;
+    }
+
+    .system-label {
+      font-size: 14px;
+      color: #6b6f76;
+    }
+
+    .system-value {
+      font-size: 14px;
+      font-weight: 400;
+      color: #202123;
+      letter-spacing: 1px;
+    }
+
+    .online {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #15803d;
+    }
+
+    .online-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #15803d;
+      animation: pulse 1.4s infinite;
+    }
+
+    
+    .new-account {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #2563eb;
+    }
+
+    .account-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #2563eb;
+      animation: pulseBlue 1.4s infinite;
+    }
+
+    @keyframes pulseBlue {
+      0% {
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.45);
+        opacity: 1;
+      }
+
+      70% {
+        box-shadow: 0 0 0 8px rgba(37, 99, 235, 0);
+        opacity: 0.55;
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+        opacity: 1;
+      }
+    }
+@keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(21, 128, 61, 0.45);
+        opacity: 1;
+      }
+
+      70% {
+        box-shadow: 0 0 0 8px rgba(21, 128, 61, 0);
+        opacity: 0.55;
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(21, 128, 61, 0);
+        opacity: 1;
+      }
+    }
+
+    .right-section {
+      padding: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .signup-box {
+      width: 100%;
+      max-width: 425px;
+    }
+
+    .signup-card {
+      padding: 36px;
+      border: 1px solid #deded8;
+      border-radius: 22px;
+      background: white;
+      box-shadow: 0 24px 70px rgba(17, 24, 39, 0.1);
+    }
+
+    .signup-header {
+      margin-bottom: 28px;
+    }
+
+    .signup-header h2 {
+      font-size: 32px;
+      margin-bottom: 8px;
+      letter-spacing: -1px;
+    }
+
+    .signup-header p {
+      color: #6b6f76;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #5f6368;
+    }
+
+    input {
+      width: 100%;
+      height: 54px;
+      padding: 0 18px;
+      border: 1px solid #d5dbe7;
+      border-radius: 12px;
+      background: #ffffff;
+      color: #202123;
+      font-size: 19px;
+      outline: none;
+    }
+
+    input:focus,
+    input:not(:placeholder-shown) {
+      background: #eaf2ff;
+      border-color: #111827;
+      box-shadow: 0 0 0 4px rgba(17, 24, 39, 0.12);
+    }
+
+    input::placeholder {
+      color: #a3a7ae;
+    }
+
+    .btn-primary {
+      width: 100%;
+      height: 57px;
+      margin-top: 14px;
+      border: none;
+      border-radius: 12px;
+      background: #111827;
+      color: white;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .btn-primary:hover {
+      background: #2f343d;
+    }
+
+    .btn-primary:disabled {
+      background: #a6abb3;
+      cursor: not-allowed;
+    }
+
+    .message {
+      min-height: 28px;
+      margin-top: 20px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .message.success {
+      color: #15803d;
+    }
+
+    .message.error {
+      color: #dc2626;
+    }
+
+    .footer-link {
+      margin-top: 28px;
+      text-align: center;
+      color: #6b6f76;
+      font-size: 15px;
+    }
+
+    .footer-link a {
+      color: #202123;
+      font-weight: 800;
+      text-decoration: none;
+      border-bottom: 1px solid #202123;
+      padding-bottom: 2px;
+    }
+
+    @media (max-width: 900px) {
+      html,
+      body {
+        overflow: auto;
+      }
+
+      .page {
+        height: auto;
+        min-height: 100vh;
+        grid-template-columns: 1fr;
+      }
+
+      .center-divider {
+        display: none;
+      }
+
+      .left-section {
+        padding: 32px 24px;
+        gap: 40px;
+      }
+
+      .intro h1 {
+        font-size: 44px;
+        white-space: normal;
+      }
+
+      .intro p {
+        font-size: 15px;
+        white-space: normal;
+      }
+
+      .system-card {
+        display: none;
+      }
+
+      .right-section {
+        padding: 24px;
+        align-items: flex-start;
+      }
+
+      .signup-card {
+        padding: 32px 26px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <div class="center-divider"></div>
+
+    <section class="left-section">
+      <div class="brand">
+        <div class="brand-mark">AI</div>
+        <div>AI Security System</div>
+      </div>
+
+      <div class="intro">
+        <div class="intro-tag">Account Setup</div>
+        <h1>새 계정 생성</h1>
+        <p>보안 모니터링 서비스 사용을 위한 계정 생성</p>
+      </div>
+
+      <div class="system-card">
+        <div class="system-row">
+          <div class="system-label">Account Status</div>
+          <div class="system-value new-account">
+            <span class="account-dot"></span>
+            New Account
+          </div>
+        </div>
+
+        <div class="system-row">
+          <div class="system-label">Access Mode</div>
+          <div class="system-value">SIGNUP REQUEST</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="right-section">
+      <div class="signup-box">
+        <div class="signup-card">
+          <div class="signup-header">
+            <h2>회원가입</h2>
+            <p>사용자 정보를 입력하여 새 계정을 생성하세요.</p>
+          </div>
+
+          <form id="signupForm" autocomplete="off">
+            <div class="field">
+              <label for="username">사용자명</label>
+              <input
+                type="text"
+                id="username"
+                placeholder="사용자명을 입력하세요"
+                required
+              />
+            </div>
+
+            <div class="field">
+              <label for="email">이메일</label>
+              <input
+                type="email"
+                id="email"
+                placeholder="example@email.com"
+                required
+              />
+            </div>
+
+            <div class="field">
+              <label for="password">비밀번호</label>
+              <input
+                type="password"
+                id="password"
+                placeholder="비밀번호를 입력하세요"
+                required
+              />
+            </div>
+
+            <button type="submit" id="signupBtn" class="btn-primary">
+              계정 생성
+            </button>
+          </form>
+
+          <div id="message" class="message"></div>
+        </div>
+
+        <div class="footer-link">
+          이미 계정이 있으신가요?
+          <a href="./login.html">로그인 화면</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const BASE_URL = window.location.port === "5500" ? "http://127.0.0.1:8000" : window.location.origin;
+
+    const signupForm = document.getElementById("signupForm");
+    const signupBtn  = document.getElementById("signupBtn");
+    const message    = document.getElementById("message");
+
+    signupForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const username = document.getElementById("username").value.trim();
+      const email    = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      if (!username || !email || !password) {
+        message.className = "message error";
+        message.textContent = "모든 항목을 입력해주세요.";
+        return;
+      }
+
+      try {
+        signupBtn.disabled = true;
+        message.className = "message";
+        message.textContent = "계정 생성 중입니다...";
+
+        const response = await fetch(`${BASE_URL}/auth/signup`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, email, password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.detail || "회원가입에 실패했습니다.");
+        }
+
+        message.className = "message success";
+        message.textContent = "계정 생성 완료. 로그인 페이지로 이동합니다.";
+
+        setTimeout(() => {
+          window.location.href = "./login.html";
+        }, 1000);
+
+      } catch (error) {
+        message.className = "message error";
+        message.textContent = error.message;
+      } finally {
+        signupBtn.disabled = false;
+      }
+    });
+  </script>
+
+</body>
+</html>

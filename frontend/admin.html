@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>관리자 대시보드</title>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f4;
+      color: #202123;
+    }
+
+    .page {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 24px;
+    }
+
+    .navbar {
+      height: 66px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 22px;
+      border: 1px solid #deded8;
+      border-radius: 18px;
+      background: #ffffff;
+      box-shadow: 0 16px 40px rgba(17, 24, 39, 0.08);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: #111827;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .nav-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #202123;
+      letter-spacing: -0.3px;
+    }
+
+    .nav-subtitle {
+      margin-top: 3px;
+      font-size: 13px;
+      color: #6b6f76;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button, a.button {
+      border: 1px solid #deded8;
+      border-radius: 11px;
+      background: #ffffff;
+      color: #202123;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    button:hover, a.button:hover {
+      background: #f1f1ee;
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(17, 24, 39, 0.12);
+    }
+
+    button:active, a.button:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    .main {
+      min-height: 0;
+      flex: 1;
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 16px;
+    }
+
+    .left-column, .right-column {
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card {
+      min-height: 0;
+      border: 1px solid #deded8;
+      border-radius: 22px;
+      background: #ffffff;
+      box-shadow: 0 20px 60px rgba(17, 24, 39, 0.08);
+      padding: 20px;
+    }
+
+    .card.fill {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .section-head {
+      margin-bottom: 14px;
+      flex-shrink: 0;
+    }
+
+    .section-title {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #202123;
+    }
+
+    .section-desc {
+      margin-top: 7px;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #6b6f76;
+      word-break: keep-all;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .info-box {
+      border: 1px solid #e5e5df;
+      border-radius: 16px;
+      background: #fbfbf8;
+      padding: 14px;
+      min-width: 0;
+    }
+
+    .label {
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: #6b6f76;
+      word-break: keep-all;
+    }
+
+    .value {
+      font-size: 26px;
+      font-weight: 800;
+      color: #202123;
+      letter-spacing: -0.5px;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 9px;
+    }
+
+    .detail-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      width: 100%;
+      min-height: 54px;
+      padding: 11px 14px;
+      border: 1px solid #e5e5df;
+      border-radius: 16px;
+      background: #fbfbf8;
+      color: #202123;
+      text-decoration: none;
+      transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .detail-link:hover {
+      background: #f1f1ee;
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(17, 24, 39, 0.1);
+    }
+
+    .detail-title {
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .detail-desc {
+      margin-top: 3px;
+      font-size: 12px;
+      color: #6b6f76;
+    }
+
+    .detail-arrow {
+      color: #6b6f76;
+      font-size: 16px;
+    }
+
+    .table-wrap {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      border: 1px solid #e5e5df;
+      border-radius: 16px;
+      background: white;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    thead {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    th {
+      background: #f1f1ee;
+      color: #374151;
+      padding: 13px 14px;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+      border-bottom: 1px solid #deded8;
+    }
+
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #eeeeea;
+      color: #202123;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    tbody tr:hover td { background: #fafaf7; }
+
+    .badge {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 999px;
+      border: 1px solid #d8d8d0;
+      background: #ffffff;
+      color: #202123;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .muted {
+      color: #6b6f76;
+      font-size: 14px;
+    }
+
+    @media (max-width: 1100px) {
+      html, body { overflow: auto; }
+      .page { height: auto; min-height: 100vh; }
+      .main { grid-template-columns: 1fr; }
+      .card.fill { min-height: 420px; }
+    }
+
+    @media (max-width: 700px) {
+      .navbar {
+        height: auto;
+        padding: 18px;
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .nav-actions { justify-content: flex-start; }
+      .stat-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <nav class="navbar">
+      <div class="nav-brand">
+        <div class="brand-mark">AI</div>
+        <div>
+          <div class="nav-title">관리자 대시보드</div>
+          <div class="nav-subtitle">사용자, 분석 기록, 상세 통계를 확인합니다.</div>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <button id="mainBtn">메인</button>
+        <button id="cctvLiveBtn">실시간 CCTV 확인</button>
+        <button id="refreshBtn">새로고침</button>
+        <button id="logoutBtn">로그아웃</button>
+      </div>
+    </nav>
+
+    <main class="main">
+      <div class="left-column">
+        <section class="card">
+          <div class="section-head">
+            <div class="section-title">시스템 통계</div>
+            <p class="section-desc">전체 데이터를 요약해서 보여줍니다.</p>
+          </div>
+
+          <div class="stat-grid">
+            <div class="info-box">
+              <div class="label">전체 사용자</div>
+              <div class="value" id="userCount">0</div>
+            </div>
+
+            <div class="info-box">
+              <div class="label">전체 분석 기록</div>
+              <div class="value" id="analysisCount">0</div>
+            </div>
+
+            <div class="info-box">
+              <div class="label">위험 감지 기록</div>
+              <div class="value" id="dangerCount">0</div>
+            </div>
+
+            <div class="info-box">
+              <div class="label">실시간 CCTV 기록</div>
+              <div class="value" id="realtimeCount">0</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card fill">
+          <div class="section-head">
+            <div class="section-title">통계 상세 보기</div>
+            <p class="section-desc">각 버튼을 누르면 그래프와 분석 기록을 함께 확인할 수 있습니다.</p>
+          </div>
+
+          <div class="detail-grid">
+            <a class="detail-link" href="./admin_stat_detail.html?type=risk">
+              <div>
+                <div class="detail-title">위험도 분포</div>
+                <div class="detail-desc">안전, 주의, 위험 단계별 분석 건수</div>
+              </div>
+              <span class="detail-arrow">›</span>
+            </a>
+
+            <a class="detail-link" href="./admin_stat_detail.html?type=source">
+              <div>
+                <div class="detail-title">업로드 / 실시간 비율</div>
+                <div class="detail-desc">업로드 영상과 실시간 CCTV 기록 비율</div>
+              </div>
+              <span class="detail-arrow">›</span>
+            </a>
+
+            <a class="detail-link" href="./admin_stat_detail.html?type=action">
+              <div>
+                <div class="detail-title">액션 유형별 통계</div>
+                <div class="detail-desc">none, alert, broadcast, report별 건수</div>
+              </div>
+              <span class="detail-arrow">›</span>
+            </a>
+
+            <a class="detail-link" href="./admin_stat_detail.html?type=object">
+              <div>
+                <div class="detail-title">위험물체 TOP 5</div>
+                <div class="detail-desc">감지된 위험 물체 상위 5개</div>
+              </div>
+              <span class="detail-arrow">›</span>
+            </a>
+          </div>
+        </section>
+      </div>
+
+      <div class="right-column">
+        <section class="card fill">
+          <div class="section-head">
+            <div class="section-title">사용자 목록</div>
+            <p class="section-desc">가입된 사용자의 계정 상태와 권한을 확인합니다.</p>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Username</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>상태</th>
+                </tr>
+              </thead>
+              <tbody id="userTableBody">
+                <tr>
+                  <td colspan="5" class="muted">사용자 데이터를 불러오는 중입니다.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="card fill">
+          <div class="section-head">
+            <div class="section-title">최근 분석 기록</div>
+            <p class="section-desc">전체 분석 기록 중 최근 항목을 확인합니다.</p>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>구분</th>
+                  <th>CCTV</th>
+                  <th>위치</th>
+                  <th>시간</th>
+                  <th>행동</th>
+                  <th>물체</th>
+                  <th>위험도</th>
+                  <th>액션</th>
+                </tr>
+              </thead>
+              <tbody id="analysisTableBody">
+                <tr>
+                  <td colspan="8" class="muted">분석 기록을 불러오는 중입니다.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const BASE_URL = window.location.port === "5500" ? "http://127.0.0.1:8000" : window.location.origin;
+
+    const accessToken = localStorage.getItem("accessToken");
+    const loggedInUserRaw = localStorage.getItem("loggedInUser");
+
+    if (!accessToken || !loggedInUserRaw) {
+      alert("로그인이 필요합니다.");
+      window.location.href = "/frontend/login.html";
+    }
+
+    const loggedInUser = JSON.parse(loggedInUserRaw);
+
+    if (loggedInUser.role !== "admin") {
+      alert("관리자 권한이 필요합니다.");
+      window.location.href = "/frontend/index.html";
+    }
+
+    function authHeaders(extraHeaders = {}) {
+      return {
+        ...extraHeaders,
+        "Authorization": `Bearer ${accessToken}`
+      };
+    }
+
+    const userCount = document.getElementById("userCount");
+    const analysisCount = document.getElementById("analysisCount");
+    const dangerCount = document.getElementById("dangerCount");
+    const realtimeCount = document.getElementById("realtimeCount");
+    const userTableBody = document.getElementById("userTableBody");
+    const analysisTableBody = document.getElementById("analysisTableBody");
+    const refreshBtn = document.getElementById("refreshBtn");
+    const mainBtn = document.getElementById("mainBtn");
+    const cctvLiveBtn = document.getElementById("cctvLiveBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    function formatDateTime(value) {
+      if (!value) return "-";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return value;
+      return date.toLocaleString("ko-KR");
+    }
+
+    function isRealtimeRow(row) {
+      return String(row.video_id || "").startsWith("realtime-");
+    }
+
+    function sourceBadge(row) {
+      return isRealtimeRow(row)
+        ? '<span class="badge">실시간</span>'
+        : '<span class="badge">업로드</span>';
+    }
+
+    function riskBadge(score) {
+      if (score >= 60) return '<span class="badge">위험</span>';
+      if (score >= 30) return '<span class="badge">주의</span>';
+      return '<span class="badge">안전</span>';
+    }
+
+    async function loadUsers() {
+      try {
+        const response = await fetch(`${BASE_URL}/admin/users`, {
+          method: "GET",
+          headers: authHeaders()
+        });
+
+        if (!response.ok) throw new Error("사용자 조회 실패");
+
+        const result = await response.json();
+        const users = result.data || [];
+
+        userCount.textContent = users.length;
+
+        if (users.length === 0) {
+          userTableBody.innerHTML = '<tr><td colspan="5" class="muted">사용자 데이터가 없습니다.</td></tr>';
+          return;
+        }
+
+        userTableBody.innerHTML = users.map(user => `
+          <tr>
+            <td>${user.id}</td>
+            <td>${user.username}</td>
+            <td>${user.email}</td>
+            <td>${user.role === "admin" ? '<span class="badge">admin</span>' : '<span class="badge">user</span>'}</td>
+            <td>${user.is_active ? '<span class="badge">active</span>' : '<span class="badge">inactive</span>'}</td>
+          </tr>
+        `).join("");
+      } catch (error) {
+        userTableBody.innerHTML = `<tr><td colspan="5">오류: ${error.message}</td></tr>`;
+      }
+    }
+
+    async function loadAnalysis() {
+      try {
+        const response = await fetch(`${BASE_URL}/admin/analysis`, {
+          method: "GET",
+          headers: authHeaders()
+        });
+
+        if (!response.ok) throw new Error("분석 기록 조회 실패");
+
+        const result = await response.json();
+        const rows = result.data || [];
+
+        analysisCount.textContent = rows.length;
+        dangerCount.textContent = rows.filter(row => row.risk_score >= 30).length;
+        realtimeCount.textContent = rows.filter(row => isRealtimeRow(row)).length;
+
+        if (rows.length === 0) {
+          analysisTableBody.innerHTML = '<tr><td colspan="8" class="muted">분석 기록이 없습니다.</td></tr>';
+          return;
+        }
+
+        analysisTableBody.innerHTML = rows.slice(0, 12).map(row => {
+          const behaviorText = row.behavior_result === 1 ? "이상" : "정상";
+          const objectText = row.object_detected ? row.object_label : "없음";
+
+          return `
+            <tr>
+              <td>${sourceBadge(row)}</td>
+              <td>${row.camera_name || "-"}</td>
+              <td>${row.camera_location || "-"}</td>
+              <td>${formatDateTime(row.created_at)}</td>
+              <td>${behaviorText}</td>
+              <td>${objectText}</td>
+              <td>${riskBadge(row.risk_score)}</td>
+              <td>${row.action}</td>
+            </tr>
+          `;
+        }).join("");
+      } catch (error) {
+        analysisTableBody.innerHTML = `<tr><td colspan="8">오류: ${error.message}</td></tr>`;
+      }
+    }
+
+    async function refreshDashboard() {
+      await loadUsers();
+      await loadAnalysis();
+    }
+
+    refreshBtn.addEventListener("click", refreshDashboard);
+
+    mainBtn.addEventListener("click", () => {
+      window.location.href = "/frontend/index.html";
+    });
+
+    cctvLiveBtn.addEventListener("click", () => {
+      window.location.href = "/frontend/cctv_live.html";
+    });
+
+    logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("loggedInUser");
+      alert("로그아웃 되었습니다.");
+      window.location.href = "/frontend/login.html";
+    });
+
+    refreshDashboard();
+  </script>
+</body>
+</html>

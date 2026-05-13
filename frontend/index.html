@@ -1,0 +1,1811 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 이상행동 감지 시스템</title>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body { width: 100%; height: 100%; }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f4;
+      color: #202123;
+      overflow: hidden;
+    }
+
+    .page {
+      width: 100%;
+      height: 100vh;
+      margin: 0;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow: hidden;
+    }
+
+    .top-fixed { flex-shrink: 0; background: #f7f7f4; }
+
+    .navbar {
+      min-height: 66px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 16px 22px;
+      border: 1px solid #deded8;
+      border-radius: 18px;
+      background: #ffffff;
+      box-shadow: 0 16px 40px rgba(17, 24, 39, 0.08);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: #111827;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .nav-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+
+    .nav-subtitle {
+      margin-top: 3px;
+      font-size: 13px;
+      color: #6b6f76;
+    }
+
+    .online-user {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #15803d;
+      font-weight: 800;
+    }
+
+    .online-pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55);
+      animation: pulseGreen 1.35s infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes pulseGreen {
+      0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55);
+      }
+      70% {
+        transform: scale(0.92);
+        box-shadow: 0 0 0 9px rgba(34, 197, 94, 0);
+      }
+      100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+      }
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button, .button {
+      border: 1px solid #deded8;
+      border-radius: 11px;
+      background: #ffffff;
+      color: #202123;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    button:hover, .button:hover {
+      background: #f1f1ee;
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(17, 24, 39, 0.12);
+    }
+
+    button:disabled {
+      color: #9ca3af;
+      background: #f1f1ee;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .primary-btn {
+      flex-shrink: 0;
+      border-color: #111827;
+      background: #111827;
+      color: white;
+    }
+
+    .primary-btn:hover { background: #2f343d; }
+
+    .workspace {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 3fr 7fr;
+      gap: 18px;
+      overflow: hidden;
+    }
+
+    .left-column {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      gap: 18px;
+      overflow: hidden;
+    }
+
+    .log-card {
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .card {
+      min-height: 0;
+      border: 1px solid #deded8;
+      border-radius: 22px;
+      background: #ffffff;
+      box-shadow: 0 20px 60px rgba(17, 24, 39, 0.08);
+      padding: 20px;
+      overflow: hidden;
+    }
+
+    .scroll-card {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .upload-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+
+    .section-head {
+      margin-bottom: 14px;
+      flex-shrink: 0;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .section-desc {
+      margin-top: 6px;
+      color: #6b6f76;
+      font-size: 14px;
+      line-height: 1.45;
+      word-break: keep-all;
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .upload-area {
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 120px;
+      border: 1px dashed #d8d8d0;
+      border-radius: 18px;
+      background: #fbfbf8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .upload-area:hover {
+      border-color: #111827;
+      background: #ffffff;
+      box-shadow: inset 0 0 0 1px rgba(17, 24, 39, 0.04);
+    }
+
+    .upload-placeholder {
+      text-align: center;
+      color: #6b6f76;
+      font-size: 13px;
+      line-height: 1.7;
+      padding: 18px;
+      z-index: 2;
+    }
+
+    .upload-icon {
+      width: 34px;
+      height: 34px;
+      margin: 0 auto 10px;
+      border-radius: 10px;
+      background: #efefeb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #5f6368;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .upload-placeholder strong {
+      color: #202123;
+      font-weight: 800;
+    }
+
+    .upload-placeholder span {
+      color: #8a8f98;
+    }
+
+    .preview-video {
+      display: none;
+      width: 100%;
+      height: 100%;
+      min-height: 120px;
+      object-fit: cover;
+      border-radius: 18px;
+      background: #111827;
+    }
+
+    .upload-area.has-video .upload-placeholder {
+      display: none;
+    }
+
+    .upload-area.has-video .preview-video {
+      display: block;
+    }
+
+    .analysis-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(17, 24, 39, 0.62);
+      color: white;
+      overflow: hidden;
+    }
+
+    .analysis-overlay.show {
+      display: flex;
+    }
+
+    .analysis-overlay::before {
+      content: "";
+      position: absolute;
+      top: -30%;
+      left: -35%;
+      width: 26%;
+      height: 160%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.28),
+        transparent
+      );
+      transform: rotate(18deg);
+      animation: scanMove 1.25s linear infinite;
+    }
+
+    .analysis-text {
+      position: relative;
+      z-index: 2;
+      padding: 12px 18px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 999px;
+      background: rgba(17, 24, 39, 0.72);
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -0.2px;
+      box-shadow: 0 14px 35px rgba(0, 0, 0, 0.25);
+    }
+
+
+    .analysis-time {
+      position: relative;
+      z-index: 2;
+      margin-top: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.82);
+      text-align: center;
+    }
+
+    .analysis-panel {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .upload-card .status-text {
+      display: none;
+    }
+
+    @keyframes scanMove {
+      from { left: -35%; }
+      to { left: 115%; }
+    }
+
+    .complete-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 6;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(240, 253, 244, 0.92);
+      color: #166534;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+    }
+
+    .complete-overlay.show {
+      display: flex;
+    }
+
+
+    .select-file-btn {
+      display: inline-flex;
+      flex-shrink: 0;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #deded8;
+      border-radius: 11px;
+      background: #ffffff;
+      color: #202123;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    .select-file-btn:hover {
+      background: #f1f1ee;
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(17, 24, 39, 0.12);
+    }
+
+    .upload-control-row {
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin-top: 14px;
+      margin-bottom: 0;
+      flex-shrink: 0;
+    }
+
+    .dashboard-danger-box {
+      display: none;
+      margin-bottom: 14px;
+      padding: 18px;
+      border: 1px solid #fecaca;
+      border-radius: 18px;
+      background: #fef2f2;
+      color: #991b1b;
+      box-shadow: 0 12px 30px rgba(153, 27, 27, 0.08);
+    }
+
+    .dashboard-danger-box.show {
+      display: block;
+    }
+
+    .dashboard-danger-title {
+      margin-bottom: 12px;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: -0.4px;
+    }
+
+    .dashboard-danger-body {
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .dashboard-danger-body strong {
+      font-weight: 900;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .upload-card .button-row {
+      justify-content: center;
+    }
+
+    .upload-result-action {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      min-height: 58px;
+      margin-top: 12px;
+      border: 1px solid #e5e5df;
+      border-radius: 16px;
+      background: #fbfbf8;
+    }
+
+    .upload-result-action.show { display: flex; }
+
+    .status-text {
+      min-height: 22px;
+      margin-top: 12px;
+      color: #6b6f76;
+      font-size: 14px;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    .dashboard-placeholder {
+      height: calc(100% - 62px);
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px dashed #d8d8d0;
+      border-radius: 18px;
+      background: #fbfbf8;
+      color: #6b6f76;
+      text-align: center;
+      font-size: 14px;
+      line-height: 1.6;
+      padding: 18px;
+    }
+
+    .result-content {
+      height: calc(100% - 62px);
+      min-height: 0;
+      overflow: auto;
+      padding-right: 4px;
+      display: none;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .info-box {
+      min-width: 0;
+      border: 1px solid #e5e5df;
+      border-radius: 16px;
+      background: #fbfbf8;
+      padding: 14px;
+    }
+
+    .label {
+      margin-bottom: 8px;
+      color: #6b6f76;
+      font-size: 13px;
+      word-break: keep-all;
+    }
+
+    .value {
+      color: #202123;
+      font-size: 17px;
+      font-weight: 800;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+
+    .badge, .small-badge, .source-badge {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 999px;
+      border: 1px solid #d8d8d0;
+      background: #ffffff;
+      color: #202123;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .badge-safe, .small-none {
+      border-color: #86efac;
+      background: #f0fdf4;
+      color: #166534;
+    }
+
+    .badge-warning, .small-alert {
+      border-color: #fde68a;
+      background: #fffbeb;
+      color: #92400e;
+    }
+
+    .small-broadcast {
+      border-color: #fed7aa;
+      background: #fff7ed;
+      color: #9a3412;
+    }
+
+    .badge-danger, .small-report {
+      border-color: #fecaca;
+      background: #fef2f2;
+      color: #991b1b;
+    }
+
+    .source-upload, .source-realtime {
+      border-color: #d8d8d0;
+      background: #ffffff;
+      color: #202123;
+    }
+
+    .gauge-wrap { margin-top: 16px; }
+
+    .gauge-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .gauge-bar {
+      width: 100%;
+      height: 16px;
+      background: #e5e5df;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .gauge-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      transition: width 0.4s ease;
+    }
+
+    .fill-safe { background: rgba(34, 197, 94, 0.68); }
+    .fill-warning { background: rgba(250, 204, 21, 0.68); }
+    .fill-danger { background: rgba(239, 68, 68, 0.68); }
+
+    .action-box, .rag-guide-box {
+      margin-top: 12px;
+      padding: 14px;
+      border: 1px solid #e5e5df;
+      border-radius: 16px;
+      background: #fbfbf8;
+      color: #202123;
+      font-size: 14px;
+      line-height: 1.55;
+      word-break: keep-all;
+    }
+
+    .json-box {
+      margin-top: 12px;
+      border-radius: 16px;
+      background: #202123;
+      color: #f9fafb;
+      padding: 16px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .rag-guide-box { display: none; }
+
+    .rag-guide-title {
+      margin-bottom: 10px;
+      color: #202123;
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    #ragGuideList { padding-left: 20px; }
+
+    #ragGuideList li {
+      margin-bottom: 8px;
+      line-height: 1.55;
+    }
+
+
+    .history-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 12px;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+    }
+
+    .history-tabs {
+      display: flex;
+      align-items: center;
+      flex-wrap: nowrap;
+      gap: 8px;
+      margin: 0;
+      flex-shrink: 0;
+    }
+
+    .history-refresh {
+      display: flex;
+      justify-content: flex-end;
+      flex-shrink: 0;
+    }
+
+
+
+    .admin-log-controls {
+      display: none;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .admin-log-btn {
+      padding: 6px 9px;
+      border-radius: 9px;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .admin-log-delete {
+      border-color: #fecaca;
+      background: #fef2f2;
+      color: #991b1b;
+    }
+
+
+    .delete-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 999999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(17, 24, 39, 0.38);
+      backdrop-filter: blur(2px);
+    }
+
+    .delete-modal-overlay.show {
+      display: flex;
+    }
+
+    .delete-modal {
+      width: min(420px, calc(100vw - 40px));
+      padding: 26px;
+      border: 1px solid #deded8;
+      border-radius: 22px;
+      background: #ffffff;
+      box-shadow: 0 24px 70px rgba(17, 24, 39, 0.24);
+      text-align: left;
+    }
+
+    .delete-modal-title {
+      margin-bottom: 12px;
+      color: #202123;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+    }
+
+    .delete-modal-desc {
+      color: #4b5563;
+      font-size: 15px;
+      line-height: 1.6;
+      word-break: keep-all;
+    }
+
+    .delete-modal-actions {
+      margin-top: 22px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .delete-modal-cancel {
+      border: 1px solid #deded8;
+      background: #ffffff;
+      color: #202123;
+    }
+
+    .delete-modal-confirm {
+      border-color: #111827;
+      background: #111827;
+      color: #ffffff;
+    }
+
+    .delete-modal-confirm:hover {
+      background: #2f343d;
+    }
+
+    .logout-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 999999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(17, 24, 39, 0.38);
+      backdrop-filter: blur(2px);
+    }
+
+    .logout-modal-overlay.show {
+      display: flex;
+    }
+
+    .logout-modal {
+      width: min(400px, calc(100vw - 40px));
+      padding: 26px;
+      border: 1px solid #deded8;
+      border-radius: 22px;
+      background: #ffffff;
+      box-shadow: 0 24px 70px rgba(17, 24, 39, 0.24);
+    }
+
+    .logout-modal-title {
+      margin-bottom: 12px;
+      color: #202123;
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .logout-modal-desc {
+      color: #4b5563;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .logout-modal-actions {
+      margin-top: 22px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+
+    .admin-log-delete:hover {
+      background: #fee2e2;
+    }
+
+    body.admin-mode .admin-log-controls {
+      display: inline-flex;
+    }
+
+    .tab-btn.active {
+      border-color: #111827;
+      background: #111827;
+      color: white;
+    }
+
+    .table-wrap {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      border: 1px solid #e5e5df;
+      border-radius: 16px;
+      background: white;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    thead {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    th {
+      background: #f1f1ee;
+      color: #374151;
+      padding: 13px 14px;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+      border-bottom: 1px solid #deded8;
+    }
+
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #eeeeea;
+      color: #202123;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    tbody tr:hover td { background: #fafaf7; }
+
+    .muted {
+      color: #6b6f76;
+      font-size: 14px;
+    }
+
+    .danger-toast {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 9999;
+      width: min(360px, calc(100vw - 32px));
+      padding: 18px;
+      border: 1px solid #fecaca;
+      border-radius: 18px;
+      background: #fef2f2;
+      color: #991b1b;
+      box-shadow: 0 20px 50px rgba(17, 24, 39, 0.18);
+      animation: slideIn 0.3s ease;
+    }
+
+    .danger-toast-title {
+      margin-bottom: 10px;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .danger-toast-body {
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(120%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    @media (max-width: 1100px) {
+      body { overflow: auto; }
+      .page {
+        height: auto;
+        min-height: 100vh;
+        overflow: visible;
+      }
+
+      .workspace, .left-column {
+        grid-template-columns: 1fr;
+        display: flex;
+        flex-direction: column;
+        overflow: visible;
+      }
+
+      .card, .scroll-card, .log-card {
+        min-height: 360px;
+      }
+
+      .dashboard-placeholder, .result-content {
+        height: auto;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .page { padding: 18px; }
+      .navbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+      .nav-actions { justify-content: flex-start; }
+      .result-grid { grid-template-columns: 1fr; }
+      .history-toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+      .history-tabs {
+        flex-wrap: wrap;
+      }
+      .history-refresh {
+        width: 100%;
+        justify-content: flex-start;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="dangerToast" class="danger-toast" style="display:none;">
+    <div class="danger-toast-title">위험 감지</div>
+    <div id="dangerToastBody" class="danger-toast-body"></div>
+  </div>
+
+  <div class="page">
+    <div class="top-fixed">
+      <nav class="navbar">
+        <div class="nav-brand">
+          <div class="brand-mark">AI</div>
+          <div>
+            <div class="nav-title">AI 이상행동 감지 및 CCTV 분석 시스템</div>
+            <div class="nav-subtitle" id="userInfo">로그인 확인 중입니다.</div>
+          </div>
+        </div>
+
+        <div class="nav-actions">
+          <button id="mypageBtn">마이페이지</button>
+          <button id="cctvLiveBtn">실시간 CCTV 확인</button>
+          <button id="adminBtn" style="display:none;">관리자 대시보드</button>
+          <button id="logoutBtn">로그아웃</button>
+        </div>
+      </nav>
+    </div>
+
+    <main class="workspace">
+      <div class="left-column">
+        <section class="card upload-card">
+          <div class="section-head">
+            <div class="section-title">분석할 영상 업로드</div>
+            <p class="section-desc">영상 파일을 업로드하여 AI 분석 결과 및 위험도 확인</p>
+          </div>
+
+          <input class="file-input" type="file" id="videoFile" accept="video/*" />
+
+          <label class="upload-area" id="uploadArea" for="videoFile">
+            <div class="upload-placeholder" id="uploadPlaceholder">
+              <div class="upload-icon">⇧</div>
+              <strong>파일을 클릭하거나</strong>
+              <span> 드래그하여 업로드</span>
+            </div>
+
+            <video class="preview-video" id="previewVideo" controls muted playsinline></video>
+
+            <div class="analysis-overlay" id="analysisOverlay">
+              <div class="analysis-panel">
+                <div class="analysis-text">AI 정밀 분석 진행 중 ..</div>
+                <div class="analysis-time" id="analysisElapsedText">0초 경과..</div>
+              </div>
+            </div>
+
+            <div class="complete-overlay" id="completeOverlay">
+              분석 완료
+            </div>
+          </label>
+
+          <div class="button-row upload-control-row">
+            <label class="select-file-btn" for="videoFile">파일/영상 선택</label>
+            <button class="primary-btn" id="startBtn">업로드 및 분석 시작</button>
+          </div>
+
+          <div class="status-text" id="statusText">대기 중</div>
+          <div class="status-text" id="videoIdText">video_id: 없음</div>
+        </section>
+
+        <section class="card scroll-card" id="resultDashboard">
+          <div class="section-head">
+            <div class="section-title">분석 결과 대시보드</div>
+            <p class="section-desc">분석 완료된 영상 상세 결과 표시</p>
+          </div>
+
+          <div id="emptyState" class="dashboard-placeholder">
+            아직 표시할 분석 결과가 없습니다.<br />
+            영상 업로드 분석 완료 후 결과 보기 버튼을 눌러주세요.
+          </div>
+
+          <div id="resultSection" class="result-content">
+            <div id="dashboardDangerBox" class="dashboard-danger-box">
+              <div class="dashboard-danger-title">위험 감지</div>
+              <div id="dashboardDangerBody" class="dashboard-danger-body"></div>
+            </div>
+
+            <div class="result-grid">
+              <div class="info-box">
+                <div class="label">행동 분석 결과</div>
+                <div class="value" id="behaviorResult">-</div>
+              </div>
+
+              <div class="info-box">
+                <div class="label">위험 물체 감지 결과</div>
+                <div class="value" id="objectResult">-</div>
+              </div>
+
+              <div class="info-box">
+                <div class="label">대응 액션</div>
+                <div class="value" id="actionResult">-</div>
+              </div>
+
+              <div class="info-box">
+                <div class="label">상태</div>
+                <div id="statusBadge">-</div>
+              </div>
+            </div>
+
+            <div class="gauge-wrap">
+              <div class="gauge-header">
+                <span>위험도 점수</span>
+                <span id="riskScoreText">0</span>
+              </div>
+              <div class="gauge-bar">
+                <div id="gaugeFill" class="gauge-fill"></div>
+              </div>
+            </div>
+
+            <div class="action-box" id="actionMessage">대응 메시지가 여기에 표시됩니다.</div>
+            <div class="json-box" id="resultJson">결과 JSON이 여기에 표시됩니다.</div>
+
+            <section id="ragGuideBox" class="rag-guide-box">
+              <div class="section-title">AI 대응 가이드</div>
+              <div id="ragGuideTitle" class="rag-guide-title"></div>
+              <ul id="ragGuideList"></ul>
+            </section>
+          </div>
+        </section>
+      </div>
+
+      <section class="card log-card">
+        <div class="section-head">
+          <div class="section-title">분석 로그 기록</div>
+          <p class="section-desc">전체/업로드 영상/실시간CCTV 기록 구분하여 확인</p>
+        </div>
+
+        <div class="history-toolbar">
+          <div class="history-tabs">
+            <button class="tab-btn active" id="tabAllBtn">전체 기록</button>
+            <button class="tab-btn" id="tabUploadBtn">업로드 영상 기록</button>
+            <button class="tab-btn" id="tabRealtimeBtn">실시간 CCTV 기록</button>
+          </div>
+
+          <div class="history-refresh">
+            <button id="loadHistoryBtn">분석 기록 불러오기</button>
+          </div>
+        </div>
+
+        <div class="status-text" id="historyStatus">기록 조회 전</div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>구분</th>
+                <th>CCTV</th>
+                <th>위치</th>
+                <th>시간</th>
+                <th>Video ID</th>
+                <th>행동</th>
+                <th>물체</th>
+                <th>신뢰도</th>
+                <th>위험도</th>
+                <th>액션</th>
+                <th class="admin-only-col">관리</th>
+              </tr>
+            </thead>
+            <tbody id="historyTableBody">
+              <tr>
+                <td colspan="11" class="muted">아직 불러온 기록이 없습니다.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+
+  
+  <div id="logoutModalOverlay" class="logout-modal-overlay">
+    <div class="logout-modal">
+      <div class="logout-modal-title">로그아웃</div>
+      <div class="logout-modal-desc">로그아웃 되었습니다.</div>
+
+      <div class="logout-modal-actions">
+        <button type="button" class="delete-modal-confirm" onclick="confirmLogout()">확인</button>
+      </div>
+    </div>
+  </div>
+
+
+  <div id="deleteModalOverlay" class="delete-modal-overlay">
+    <div class="delete-modal">
+      <div class="delete-modal-title">분석 로그 삭제</div>
+      <div class="delete-modal-desc">선택한 기록을 삭제하시겠습니까?</div>
+
+      <div class="delete-modal-actions">
+        <button type="button" class="delete-modal-cancel" onclick="closeDeleteModal()">취소</button>
+        <button type="button" class="delete-modal-confirm" onclick="confirmDeleteHistoryRow()">삭제</button>
+      </div>
+    </div>
+  </div>
+
+
+  <script>
+    const BASE_URL = window.location.port === "5500" ? "http://127.0.0.1:8000" : window.location.origin;
+    const FRONT_LOGIN_URL = `${window.location.origin}/frontend/login.html`;
+
+    const accessToken = localStorage.getItem("accessToken");
+    const loggedInUserRaw = localStorage.getItem("loggedInUser");
+    const loggedInUser = loggedInUserRaw ? JSON.parse(loggedInUserRaw) : null;
+
+    if (!accessToken || !loggedInUser) {
+      alert("로그인이 필요합니다.");
+      window.location.href = FRONT_LOGIN_URL;
+    }
+
+    function authHeaders(extraHeaders = {}) {
+      return {
+        ...extraHeaders,
+        "Authorization": `Bearer ${accessToken}`
+      };
+    }
+
+    const userInfo = document.getElementById("userInfo");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const mypageBtn = document.getElementById("mypageBtn");
+    const cctvLiveBtn = document.getElementById("cctvLiveBtn");
+    const adminBtn = document.getElementById("adminBtn");
+
+    if (loggedInUser) {
+      userInfo.innerHTML = `
+        <span class="online-user">
+          <span class="online-pulse"></span>
+          <span>${loggedInUser.username} 로그인 중 (${loggedInUser.role})</span>
+        </span>
+      `;
+    }
+
+    if (loggedInUser.role === "admin") {
+      adminBtn.style.display = "inline-block";
+      document.body.classList.add("admin-mode");
+    }
+
+    
+    function openLogoutModal() {
+      document.getElementById("logoutModalOverlay").classList.add("show");
+    }
+
+    function closeLogoutModal() {
+      document.getElementById("logoutModalOverlay").classList.remove("show");
+    }
+
+    function confirmLogout() {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("loggedInUser");
+      window.location.href = FRONT_LOGIN_URL;
+    }
+
+    logoutBtn.addEventListener("click", () => {
+      openLogoutModal();
+    });
+
+
+    const videoFileInput = document.getElementById("videoFile");
+    const uploadArea = document.getElementById("uploadArea");
+    const previewVideo = document.getElementById("previewVideo");
+    const analysisOverlay = document.getElementById("analysisOverlay");
+    const analysisElapsedText = document.getElementById("analysisElapsedText");
+    const completeOverlay = document.getElementById("completeOverlay");
+
+    const startBtn = document.getElementById("startBtn");
+    const statusText = document.getElementById("statusText");
+    const videoIdText = document.getElementById("videoIdText");
+    const emptyState = document.getElementById("emptyState");
+    const resultSection = document.getElementById("resultSection");
+    const behaviorResult = document.getElementById("behaviorResult");
+    const objectResult = document.getElementById("objectResult");
+    const actionResult = document.getElementById("actionResult");
+    const statusBadge = document.getElementById("statusBadge");
+    const riskScoreText = document.getElementById("riskScoreText");
+    const gaugeFill = document.getElementById("gaugeFill");
+    const actionMessage = document.getElementById("actionMessage");
+    const resultJson = document.getElementById("resultJson");
+    const ragGuideBox = document.getElementById("ragGuideBox");
+    const ragGuideTitle = document.getElementById("ragGuideTitle");
+    const ragGuideList = document.getElementById("ragGuideList");
+    const resultDashboard = document.getElementById("resultDashboard");
+    
+    
+    const dangerToast = document.getElementById("dangerToast");
+    const dangerToastBody = document.getElementById("dangerToastBody");
+    const dashboardDangerBox = document.getElementById("dashboardDangerBox");
+    const dashboardDangerBody = document.getElementById("dashboardDangerBody");
+    const loadHistoryBtn = document.getElementById("loadHistoryBtn");
+    const historyStatus = document.getElementById("historyStatus");
+    const historyTableBody = document.getElementById("historyTableBody");
+    const tabAllBtn = document.getElementById("tabAllBtn");
+    const tabUploadBtn = document.getElementById("tabUploadBtn");
+    const tabRealtimeBtn = document.getElementById("tabRealtimeBtn");
+
+    let historyRows = [];
+    let currentHistoryFilter = "all";
+    let analysisTimer = null;
+    let analysisStartedAt = null;
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function startAnalysisTimer() {
+      analysisStartedAt = Date.now();
+      analysisElapsedText.textContent = "0초 경과..";
+
+      if (analysisTimer) {
+        clearInterval(analysisTimer);
+      }
+
+      analysisTimer = setInterval(() => {
+        const elapsedSeconds = Math.floor((Date.now() - analysisStartedAt) / 1000);
+        analysisElapsedText.textContent = `${elapsedSeconds}초 경과..`;
+      }, 1000);
+    }
+
+    function stopAnalysisTimer() {
+      if (analysisTimer) {
+        clearInterval(analysisTimer);
+        analysisTimer = null;
+      }
+    }
+
+    function showAnalyzingState() {
+      analysisOverlay.classList.add("show");
+      completeOverlay.classList.remove("show");
+      startAnalysisTimer();
+    }
+
+    function showCompleteState() {
+      stopAnalysisTimer();
+      analysisOverlay.classList.remove("show");
+      completeOverlay.classList.add("show");
+    }
+
+    function clearAnalysisState() {
+      stopAnalysisTimer();
+      analysisOverlay.classList.remove("show");
+      completeOverlay.classList.remove("show");
+    }
+
+    videoFileInput.addEventListener("change", () => {
+      const file = videoFileInput.files[0];
+
+      if (!file) return;
+
+      const videoUrl = URL.createObjectURL(file);
+      previewVideo.src = videoUrl;
+      previewVideo.load();
+      uploadArea.classList.add("has-video");
+      dashboardDangerBox.classList.remove("show");
+      dashboardDangerBody.innerHTML = "";
+      statusText.textContent = `선택된 파일: ${file.name}`;
+    });
+
+    uploadArea.addEventListener("dragover", (event) => {
+      event.preventDefault();
+      uploadArea.style.borderColor = "#111827";
+      uploadArea.style.background = "#ffffff";
+    });
+
+    uploadArea.addEventListener("dragleave", () => {
+      uploadArea.style.borderColor = "#d8d8d0";
+      uploadArea.style.background = "#fbfbf8";
+    });
+
+    uploadArea.addEventListener("drop", (event) => {
+      event.preventDefault();
+
+      uploadArea.style.borderColor = "#d8d8d0";
+      uploadArea.style.background = "#fbfbf8";
+
+      const file = event.dataTransfer.files[0];
+
+      if (!file) return;
+
+      if (!file.type.startsWith("video/")) {
+        statusText.textContent = "영상 파일만 업로드할 수 있습니다.";
+        return;
+      }
+
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      videoFileInput.files = dataTransfer.files;
+
+      const videoUrl = URL.createObjectURL(file);
+      previewVideo.src = videoUrl;
+      previewVideo.load();
+      uploadArea.classList.add("has-video");
+      dashboardDangerBox.classList.remove("show");
+      dashboardDangerBody.innerHTML = "";
+      statusText.textContent = `선택된 파일: ${file.name}`;
+    });
+
+    function actionLabel(action) {
+      const labels = {
+        none: "안전",
+        alert: "관리자 확인",
+        broadcast: "경보",
+        report: "신고"
+      };
+
+      return labels[action] || action || "안전";
+    }
+
+    function getStatusInfo(score) {
+      if (score < 30) {
+        return {
+          text: "안전",
+          badgeClass: "badge badge-safe",
+          fillClass: "gauge-fill fill-safe"
+        };
+      }
+
+      if (score < 85) {
+        return {
+          text: "주의",
+          badgeClass: "badge badge-warning",
+          fillClass: "gauge-fill fill-warning"
+        };
+      }
+
+      return {
+        text: "위험",
+        badgeClass: "badge badge-danger",
+        fillClass: "gauge-fill fill-danger"
+      };
+    }
+
+    function getActionMessage(action) {
+      if (action === "none") return "정상 상태입니다. 별도 조치가 필요하지 않습니다.";
+      if (action === "alert") return "주의 상황입니다. 관리자 확인이 필요합니다.";
+      if (action === "broadcast") return "위험 가능성이 높습니다. 현장 경보 또는 안내가 필요합니다.";
+      if (action === "report") return "긴급 상황입니다. 즉시 신고 또는 대응이 필요합니다.";
+      return "대응 정보를 확인할 수 없습니다.";
+    }
+
+    function showResultDashboard() {
+      emptyState.style.display = "none";
+      resultSection.style.display = "block";
+      resultDashboard.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    function formatDateTime(value) {
+      if (!value) return "-";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return value;
+      return date.toLocaleString("ko-KR");
+    }
+
+    function isRealtimeRow(row) {
+      return String(row.video_id || "").startsWith("realtime-");
+    }
+
+    function getSourceInfo(row) {
+      if (isRealtimeRow(row)) {
+        return {
+          text: "실시간 CCTV",
+          className: "source-badge source-realtime"
+        };
+      }
+
+      return {
+        text: "업로드 영상",
+        className: "source-badge source-upload"
+      };
+    }
+
+    function getActionBadge(action) {
+      const classMap = {
+        none: "small-badge small-none",
+        alert: "small-badge small-alert",
+        broadcast: "small-badge small-broadcast",
+        report: "small-badge small-report"
+      };
+
+      return `<span class="${classMap[action] || "small-badge small-none"}">${actionLabel(action)}</span>`;
+    }
+
+    function renderResult(data) {
+      behaviorResult.textContent =
+        data.behavior_result === "abnormal" || data.behavior_result === 1
+          ? `이상 (${data.behavior_confidence})`
+          : `정상 (${data.behavior_confidence})`;
+
+      objectResult.textContent = data.object_detected
+        ? `${data.object_label} (${Number(data.object_confidence).toFixed(3)})`
+        : "위험 물체 없음";
+
+      actionResult.textContent = actionLabel(data.action);
+
+      const status = getStatusInfo(Number(data.risk_score));
+      statusBadge.innerHTML = `<span class="${status.badgeClass}">${status.text}</span>`;
+
+      riskScoreText.textContent = data.risk_score;
+      gaugeFill.className = status.fillClass;
+      gaugeFill.style.width = `${Math.min(Number(data.risk_score), 100)}%`;
+
+      actionMessage.textContent = data.action_result || getActionMessage(data.action);
+      resultJson.textContent = JSON.stringify(data, null, 2);
+
+      if (data.rag_guide && data.rag_guide.guide) {
+        const guideData = data.rag_guide.guide;
+        ragGuideBox.style.display = "block";
+        ragGuideTitle.textContent = guideData.title || "대응 가이드";
+        ragGuideList.innerHTML = "";
+
+        if (guideData.guide) {
+          guideData.guide.forEach(item => {
+            const li = document.createElement("li");
+            li.textContent = item;
+            ragGuideList.appendChild(li);
+          });
+        }
+      } else {
+        ragGuideBox.style.display = "none";
+      }
+    }
+
+    async function uploadVideo(file) {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch(`${BASE_URL}/upload/video`, {
+        method: "POST",
+        body: formData
+      });
+
+      if (!response.ok) throw new Error("영상 업로드 실패");
+      return await response.json();
+    }
+
+    async function analyzeVideo(filePath) {
+      const response = await fetch(`${BASE_URL}/analysis/`, {
+        method: "POST",
+        headers: authHeaders({
+          "Content-Type": "application/json"
+        }),
+        body: JSON.stringify({
+          file_path: filePath
+        })
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("loggedInUser");
+        alert("로그인이 만료되었습니다. 다시 로그인해주세요.");
+        window.location.href = FRONT_LOGIN_URL;
+        return;
+      }
+
+      if (!response.ok) throw new Error("영상 분석 실패");
+      return await response.json();
+    }
+
+    function getFilteredHistoryRows() {
+      if (currentHistoryFilter === "upload") {
+        return historyRows.filter(row => !isRealtimeRow(row));
+      }
+
+      if (currentHistoryFilter === "realtime") {
+        return historyRows.filter(row => isRealtimeRow(row));
+      }
+
+      return historyRows;
+    }
+
+    function updateTabButtons() {
+      tabAllBtn.classList.remove("active");
+      tabUploadBtn.classList.remove("active");
+      tabRealtimeBtn.classList.remove("active");
+
+      if (currentHistoryFilter === "all") {
+        tabAllBtn.classList.add("active");
+      } else if (currentHistoryFilter === "upload") {
+        tabUploadBtn.classList.add("active");
+      } else if (currentHistoryFilter === "realtime") {
+        tabRealtimeBtn.classList.add("active");
+      }
+    }
+
+
+    function isAdminUser() {
+      return loggedInUser && loggedInUser.role === "admin";
+    }
+
+    function moveHistoryRow(index, direction) {
+      if (!isAdminUser()) return;
+
+      const targetIndex = index + direction;
+
+      if (targetIndex < 0 || targetIndex >= historyRows.length) {
+        return;
+      }
+
+      const temp = historyRows[index];
+      historyRows[index] = historyRows[targetIndex];
+      historyRows[targetIndex] = temp;
+
+      renderHistoryTable();
+    }
+
+    let pendingDeleteIndex = null;
+
+    function openDeleteModal(index) {
+      if (!isAdminUser()) return;
+
+      pendingDeleteIndex = index;
+      const modalOverlay = document.getElementById("deleteModalOverlay");
+
+      if (modalOverlay) {
+        modalOverlay.classList.add("show");
+      }
+    }
+
+    function closeDeleteModal() {
+      pendingDeleteIndex = null;
+      const modalOverlay = document.getElementById("deleteModalOverlay");
+
+      if (modalOverlay) {
+        modalOverlay.classList.remove("show");
+      }
+    }
+
+    function confirmDeleteHistoryRow() {
+      if (!isAdminUser()) return;
+      if (pendingDeleteIndex === null) return;
+
+      historyRows.splice(pendingDeleteIndex, 1);
+      closeDeleteModal();
+      renderHistoryTable();
+    }
+
+    function deleteHistoryRow(index) {
+      openDeleteModal(index);
+    }
+
+    function getOriginalHistoryIndex(row) {
+      return historyRows.indexOf(row);
+    }
+
+    function getAdminControls(row) {
+      if (!isAdminUser()) {
+        return "";
+      }
+
+      const originalIndex = getOriginalHistoryIndex(row);
+
+      return `
+        <span class="admin-log-controls">
+          <button class="admin-log-btn" type="button" onclick="moveHistoryRow(${originalIndex}, -1)">↑</button>
+          <button class="admin-log-btn" type="button" onclick="moveHistoryRow(${originalIndex}, 1)">↓</button>
+          <button class="admin-log-btn admin-log-delete" type="button" onclick="deleteHistoryRow(${originalIndex})">삭제</button>
+        </span>
+      `;
+    }
+
+    function renderHistoryTable() {
+      updateTabButtons();
+
+      const rows = getFilteredHistoryRows();
+      const total = historyRows.length;
+      const uploadCount = historyRows.filter(row => !isRealtimeRow(row)).length;
+      const realtimeCount = historyRows.filter(row => isRealtimeRow(row)).length;
+
+      historyStatus.textContent = isAdminUser()
+        ? `전체 ${total}개 / 업로드 ${uploadCount}개 / 실시간 ${realtimeCount}개 · 관리자 화면 편집 가능`
+        : `전체 ${total}개 / 업로드 ${uploadCount}개 / 실시간 ${realtimeCount}개`;
+
+      if (rows.length === 0) {
+        historyTableBody.innerHTML = `
+          <tr>
+            <td colspan="11" class="muted">해당 유형의 기록이 없습니다.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      historyTableBody.innerHTML = rows.map(row => {
+        const behaviorText = row.behavior_result === 1 ? "이상" : "정상";
+        const objectText = row.object_detected ? row.object_label : "없음";
+        const objectConfidence =
+          row.object_confidence !== null && row.object_confidence !== undefined
+            ? Number(row.object_confidence).toFixed(3)
+            : "-";
+        const source = getSourceInfo(row);
+
+        return `
+          <tr>
+            <td><span class="${source.className}">${source.text}</span></td>
+            <td>${row.camera_name || "-"}</td>
+            <td>${row.camera_location || "-"}</td>
+            <td>${formatDateTime(row.created_at)}</td>
+            <td>${row.video_id}</td>
+            <td>${behaviorText}</td>
+            <td>${objectText}</td>
+            <td>${objectConfidence}</td>
+            <td>${row.risk_score}</td>
+            <td>${getActionBadge(row.action)}</td>
+            <td>${getAdminControls(row)}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    async function loadHistory() {
+      historyStatus.textContent = "분석 기록을 불러오는 중입니다.";
+
+      try {
+        const response = await fetch(`${BASE_URL}/history/`, {
+          method: "GET",
+          headers: authHeaders()
+        });
+
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("loggedInUser");
+          alert("로그인이 만료되었습니다. 다시 로그인해주세요.");
+          window.location.href = FRONT_LOGIN_URL;
+          return;
+        }
+
+        if (!response.ok) throw new Error("분석 기록 조회 실패");
+
+        const result = await response.json();
+        historyRows = result.data || [];
+        renderHistoryTable();
+      } catch (error) {
+        historyStatus.textContent = `기록 조회 오류: ${error.message}`;
+      }
+    }
+
+    startBtn.addEventListener("click", async () => {
+      const file = videoFileInput.files[0];
+
+      if (!file) {
+        statusText.textContent = "영상 파일을 먼저 선택해주세요.";
+        return;
+      }
+
+      try {
+        startBtn.disabled = true;
+
+        dashboardDangerBox.classList.remove("show");
+        dashboardDangerBody.innerHTML = "";
+        emptyState.style.display = "flex";
+        resultSection.style.display = "none";
+        statusText.textContent = "영상 업로드 중입니다.";
+        videoIdText.textContent = "video_id: 없음";
+
+        showAnalyzingState();
+
+        const uploadData = await uploadVideo(file);
+        const videoId = uploadData.video_id;
+        const filePath = uploadData.path || uploadData.file_path;
+
+        videoIdText.textContent = `video_id: ${videoId}`;
+        statusText.textContent = "AI 정밀 분석 진행 중 ..";
+
+        const analysisData = await analyzeVideo(filePath);
+
+        if (!analysisData) return;
+
+        showCompleteState();
+        statusText.textContent = "분석 완료";
+
+        await sleep(2000);
+
+        clearAnalysisState();
+        statusText.textContent = "";
+        renderResult(analysisData);
+        showResultDashboard();
+
+        if (
+          analysisData.object_detected ||
+          analysisData.behavior_result === "abnormal"
+        ) {
+          showDangerPopup(
+            analysisData.object_label || "이상행동",
+            analysisData.camera_name || "UPLOAD",
+            analysisData.camera_location || "영상 업로드 분석"
+          );
+        }
+
+        await loadHistory();
+
+      } catch (error) {
+        clearAnalysisState();
+        statusText.textContent = `오류 발생: ${error.message}`;
+      } finally {
+        startBtn.disabled = false;
+      }
+    });
+
+    loadHistoryBtn.addEventListener("click", loadHistory);
+
+    tabAllBtn.addEventListener("click", () => {
+      currentHistoryFilter = "all";
+      renderHistoryTable();
+    });
+
+    tabUploadBtn.addEventListener("click", () => {
+      currentHistoryFilter = "upload";
+      renderHistoryTable();
+    });
+
+    tabRealtimeBtn.addEventListener("click", () => {
+      currentHistoryFilter = "realtime";
+      renderHistoryTable();
+    });
+
+
+    document.getElementById("logoutModalOverlay").addEventListener("click", (event) => {
+      if (event.target.id === "logoutModalOverlay") {
+        closeLogoutModal();
+      }
+    });
+
+    document.getElementById("deleteModalOverlay").addEventListener("click", (event) => {
+      if (event.target.id === "deleteModalOverlay") {
+        closeDeleteModal();
+      }
+    });
+
+    loadHistory();
+
+    mypageBtn.addEventListener("click", () => {
+      window.location.href = "/frontend/mypage.html";
+    });
+
+    cctvLiveBtn.addEventListener("click", () => {
+      window.location.href = "/frontend/cctv_live.html";
+    });
+
+    adminBtn.addEventListener("click", () => {
+      window.location.href = "/frontend/admin.html";
+    });
+
+    function showDangerPopup(detectedText, cameraName, cameraLocation) {
+      const now = new Date().toLocaleString("ko-KR");
+
+      const dangerContent = `
+        <div><strong>감지 물체:</strong> ${detectedText}</div>
+        <div><strong>카메라:</strong> ${cameraName}</div>
+        <div><strong>위치:</strong> ${cameraLocation}</div>
+        <div><strong>시간:</strong> ${now}</div>
+        <div style="margin-top:10px;font-weight:700;">즉시 상황을 확인하세요.</div>
+      `;
+
+      dashboardDangerBody.innerHTML = dangerContent;
+      dashboardDangerBox.classList.add("show");
+
+      dangerToast.style.display = "none";
+    }
+  </script>
+</body>
+</html>

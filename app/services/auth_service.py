@@ -1,10 +1,11 @@
 from datetime import datetime, timedelta
+import os
 
 from jose import jwt, JWTError
 from passlib.context import CryptContext
 
 
-SECRET_KEY = "team-project-secret-key-change-later"
+SECRET_KEY = os.getenv("SECRET_KEY", "team-project-secret-key-change-later")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 

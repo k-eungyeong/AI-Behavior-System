@@ -4,7 +4,7 @@ import uuid
 
 router = APIRouter(tags=["Upload"])
 
-UPLOAD_DIR = "uploads"
+UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 

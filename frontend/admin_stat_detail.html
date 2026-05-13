@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>관리자 통계 상세</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f4;
+      color: #202123;
+    }
+
+    .page {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding: 28px;
+    }
+
+    .navbar {
+      height: 66px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 22px;
+      border: 1px solid #deded8;
+      border-radius: 18px;
+      background: #ffffff;
+      box-shadow: 0 16px 40px rgba(17, 24, 39, 0.08);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: #111827;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .nav-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+
+    .nav-subtitle {
+      margin-top: 3px;
+      font-size: 13px;
+      color: #6b6f76;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 1px solid #deded8;
+      border-radius: 11px;
+      background: #ffffff;
+      color: #202123;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    button:hover {
+      background: #f1f1ee;
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(17, 24, 39, 0.12);
+    }
+
+    .main {
+      min-height: 0;
+      flex: 1;
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 18px;
+    }
+
+    .card {
+      min-height: 0;
+      border: 1px solid #deded8;
+      border-radius: 22px;
+      background: #ffffff;
+      box-shadow: 0 20px 60px rgba(17, 24, 39, 0.08);
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .section-head {
+      margin-bottom: 16px;
+      flex-shrink: 0;
+    }
+
+    .section-title {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .section-desc {
+      margin-top: 7px;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #6b6f76;
+      word-break: keep-all;
+    }
+
+    .chart-wrap {
+      flex: 1;
+      min-height: 0;
+      border: 1px solid #e5e5df;
+      border-radius: 18px;
+      background: #fbfbf8;
+      padding: 20px;
+    }
+
+    .chart-wrap canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .table-wrap {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      border: 1px solid #e5e5df;
+      border-radius: 16px;
+      background: white;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    thead {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    th {
+      background: #f1f1ee;
+      color: #374151;
+      padding: 13px 14px;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+      border-bottom: 1px solid #deded8;
+    }
+
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #eeeeea;
+      color: #202123;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    tbody tr:hover td { background: #fafaf7; }
+
+    .badge {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 999px;
+      border: 1px solid #d8d8d0;
+      background: #ffffff;
+      color: #202123;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .badge-safe {
+      border-color: #86efac;
+      background: #f0fdf4;
+      color: #166534;
+    }
+
+    .badge-check {
+      border-color: #fde68a;
+      background: #fffbeb;
+      color: #92400e;
+    }
+
+    .badge-alert {
+      border-color: #fed7aa;
+      background: #fff7ed;
+      color: #9a3412;
+    }
+
+    .badge-report {
+      border-color: #fecaca;
+      background: #fef2f2;
+      color: #991b1b;
+    }
+
+    .muted {
+      color: #6b6f76;
+      font-size: 14px;
+    }
+
+    @media (max-width: 1000px) {
+      html, body { overflow: auto; }
+      .page { height: auto; min-height: 100vh; }
+      .main { grid-template-columns: 1fr; }
+      .card { min-height: 430px; }
+    }
+
+    @media (max-width: 700px) {
+      .navbar {
+        height: auto;
+        padding: 18px;
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .nav-actions { justify-content: flex-start; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <nav class="navbar">
+      <div class="nav-brand">
+        <div class="brand-mark">AI</div>
+        <div>
+          <div class="nav-title" id="pageTitle">통계 상세</div>
+          <div class="nav-subtitle" id="pageSubtitle">그래프와 분석 기록을 함께 확인합니다.</div>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <button id="refreshBtn">새로고침</button>
+        <button id="adminBtn">관리자 대시보드</button>
+        <button id="mainBtn">메인</button>
+        <button id="logoutBtn">로그아웃</button>
+      </div>
+    </nav>
+
+    <main class="main">
+      <section class="card">
+        <div class="section-head">
+          <div class="section-title" id="chartTitle">그래프</div>
+          <p class="section-desc" id="chartDesc">선택한 통계 그래프입니다.</p>
+        </div>
+
+        <div class="chart-wrap">
+          <canvas id="detailChart"></canvas>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <div class="section-title">분석 기록</div>
+          <p class="section-desc">그래프의 기준이 되는 전체 분석 데이터를 확인합니다.</p>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>구분</th>
+                <th>CCTV</th>
+                <th>위치</th>
+                <th>시간</th>
+                <th>Video ID</th>
+                <th>행동</th>
+                <th>물체</th>
+                <th>위험도</th>
+                <th>액션</th>
+              </tr>
+            </thead>
+            <tbody id="analysisTableBody">
+              <tr>
+                <td colspan="9" class="muted">분석 기록을 불러오는 중입니다.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const BASE_URL = window.location.port === "5500" ? "http://127.0.0.1:8000" : window.location.origin;
+    const accessToken = localStorage.getItem("accessToken");
+    const loggedInUserRaw = localStorage.getItem("loggedInUser");
+
+    if (!accessToken || !loggedInUserRaw) {
+      alert("로그인이 필요합니다.");
+      window.location.href = "/frontend/login.html";
+    }
+
+    const loggedInUser = JSON.parse(loggedInUserRaw);
+
+    if (loggedInUser.role !== "admin") {
+      alert("관리자 권한이 필요합니다.");
+      window.location.href = "/frontend/index.html";
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const statType = params.get("type") || "risk";
+
+    const pageTitle = document.getElementById("pageTitle");
+    const pageSubtitle = document.getElementById("pageSubtitle");
+    const chartTitle = document.getElementById("chartTitle");
+    const chartDesc = document.getElementById("chartDesc");
+    const analysisTableBody = document.getElementById("analysisTableBody");
+    const refreshBtn = document.getElementById("refreshBtn");
+    const adminBtn = document.getElementById("adminBtn");
+    const mainBtn = document.getElementById("mainBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    let detailChart = null;
+
+    const actionOrder = ["none", "alert", "broadcast", "report"];
+    const actionLabels = {
+      none: "안전",
+      alert: "관리자 확인",
+      broadcast: "경보",
+      report: "신고"
+    };
+    const actionColors = {
+      none: "rgba(34, 197, 94, 0.68)",
+      alert: "rgba(250, 204, 21, 0.68)",
+      broadcast: "rgba(249, 115, 22, 0.68)",
+      report: "rgba(239, 68, 68, 0.68)"
+    };
+
+    const statInfo = {
+      risk: {
+        title: "위험도 분포",
+        desc: "분석 결과값을 안전, 관리자 확인, 경보, 신고 단계로 나누어 보여줍니다."
+      },
+      source: {
+        title: "업로드 / 실시간 비율",
+        desc: "업로드 영상 분석과 실시간 CCTV 분석 비율을 보여줍니다."
+      },
+      action: {
+        title: "액션 유형별 통계",
+        desc: "분석 결과로 선택된 액션 유형별 건수를 보여줍니다."
+      },
+      object: {
+        title: "위험물체 TOP 5",
+        desc: "가장 많이 감지된 위험 물체 상위 5개를 보여줍니다."
+      }
+    };
+
+    Chart.defaults.color = "#6b6f76";
+    Chart.defaults.borderColor = "#e5e5df";
+    Chart.defaults.font.family = "Arial, sans-serif";
+
+    function authHeaders(extraHeaders = {}) {
+      return {
+        ...extraHeaders,
+        "Authorization": `Bearer ${accessToken}`
+      };
+    }
+
+    function formatDateTime(value) {
+      if (!value) return "-";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return value;
+      return date.toLocaleString("ko-KR");
+    }
+
+    function isRealtimeRow(row) {
+      return String(row.video_id || "").startsWith("realtime-");
+    }
+
+    function sourceBadge(row) {
+      return isRealtimeRow(row)
+        ? '<span class="badge">실시간</span>'
+        : '<span class="badge">업로드</span>';
+    }
+
+    function actionLabel(action) {
+      return actionLabels[action] || action || "안전";
+    }
+
+    function actionColor(action) {
+      return actionColors[action] || "#6b6f76";
+    }
+
+    function actionBadge(action) {
+      const classNames = {
+        none: "badge badge-safe",
+        alert: "badge badge-check",
+        broadcast: "badge badge-alert",
+        report: "badge badge-report"
+      };
+
+      return `<span class="${classNames[action] || "badge"}">${actionLabel(action)}</span>`;
+    }
+
+    function riskBadge(score) {
+      if (score >= 60) return '<span class="badge badge-report">위험</span>';
+      if (score >= 30) return '<span class="badge badge-check">주의</span>';
+      return '<span class="badge badge-safe">안전</span>';
+    }
+
+    function countActions(rows) {
+      const counts = {
+        none: 0,
+        alert: 0,
+        broadcast: 0,
+        report: 0
+      };
+
+      rows.forEach(row => {
+        const action = row.action || "none";
+        counts[action] = (counts[action] || 0) + 1;
+      });
+
+      return counts;
+    }
+
+    function legendByItems(items) {
+      return {
+        labels: {
+          boxWidth: 12,
+          generateLabels() {
+            return items.map((item, index) => ({
+              text: `${item.label}: ${item.value}건`,
+              fillStyle: item.color,
+              strokeStyle: item.color,
+              lineWidth: 0,
+              hidden: false,
+              index
+            }));
+          }
+        }
+      };
+    }
+
+    function commonBarOptions(legendItems) {
+      return {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: legendByItems(legendItems)
+        },
+        scales: {
+          x: { grid: { display: false } },
+          y: {
+            beginAtZero: true,
+            ticks: { precision: 0 }
+          }
+        }
+      };
+    }
+
+    function renderActionBasedChart(rows, titleLabel) {
+      const counts = countActions(rows);
+      const labels = actionOrder.map(actionLabel);
+      const data = actionOrder.map(action => counts[action] || 0);
+      const colors = actionOrder.map(actionColor);
+      const legendItems = actionOrder.map(action => ({
+        label: actionLabel(action),
+        value: counts[action] || 0,
+        color: actionColor(action)
+      }));
+
+      detailChart = new Chart(document.getElementById("detailChart"), {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [{
+            label: titleLabel,
+            data,
+            backgroundColor: colors,
+            barPercentage: 0.8,
+            categoryPercentage: 0.8,
+            borderRadius: 8
+          }]
+        },
+        options: commonBarOptions(legendItems)
+      });
+    }
+
+    function renderChart(rows) {
+      if (detailChart) detailChart.destroy();
+
+      const info = statInfo[statType] || statInfo.risk;
+      pageTitle.textContent = info.title;
+      pageSubtitle.textContent = info.desc;
+      chartTitle.textContent = info.title;
+      chartDesc.textContent = info.desc;
+
+      if (statType === "source") {
+        const uploadCount = rows.filter(row => !isRealtimeRow(row)).length;
+        const realtimeCount = rows.filter(row => isRealtimeRow(row)).length;
+        const sourceItems = [
+          { label: "업로드", value: uploadCount, color: "rgba(32, 33, 35, 0.4)" },
+          { label: "실시간", value: realtimeCount, color: "rgba(107, 111, 118, 0.4)" }
+        ];
+
+        detailChart = new Chart(document.getElementById("detailChart"), {
+          type: "doughnut",
+          data: {
+            labels: sourceItems.map(item => item.label),
+            datasets: [{
+              data: sourceItems.map(item => item.value),
+              backgroundColor: sourceItems.map(item => item.color),
+              borderColor: "#ffffff",
+              borderWidth: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: legendByItems(sourceItems)
+            }
+          }
+        });
+        return;
+      }
+
+      if (statType === "risk") {
+        renderActionBasedChart(rows, "결과 건수");
+        return;
+      }
+
+      if (statType === "action") {
+        renderActionBasedChart(rows, "액션 건수");
+        return;
+      }
+
+      if (statType === "object") {
+        const objectCounts = {};
+
+        rows.forEach(row => {
+          if (row.object_detected && row.object_label) {
+            objectCounts[row.object_label] = (objectCounts[row.object_label] || 0) + 1;
+          }
+        });
+
+        const objectEntries = Object.entries(objectCounts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5);
+
+        const objectItems = objectEntries.map(([label, value]) => ({
+          label,
+          value,
+          color: "#202123"
+        }));
+
+        detailChart = new Chart(document.getElementById("detailChart"), {
+          type: "bar",
+          data: {
+            labels: objectItems.map(item => item.label),
+            datasets: [{
+              label: "감지 횟수",
+              data: objectItems.map(item => item.value),
+              backgroundColor: "rgba(32, 33, 35, 0.68)",
+              barPercentage: 0.8,
+              categoryPercentage: 0.8,
+              borderRadius: 8
+            }]
+          },
+          options: commonBarOptions(objectItems)
+        });
+      }
+    }
+
+    function renderTable(rows) {
+      if (rows.length === 0) {
+        analysisTableBody.innerHTML = '<tr><td colspan="9" class="muted">분석 기록이 없습니다.</td></tr>';
+        return;
+      }
+
+      analysisTableBody.innerHTML = rows.map(row => {
+        const behaviorText = row.behavior_result === 1 ? "이상" : "정상";
+        const objectText = row.object_detected ? row.object_label : "없음";
+
+        return `
+          <tr>
+            <td>${sourceBadge(row)}</td>
+            <td>${row.camera_name || "-"}</td>
+            <td>${row.camera_location || "-"}</td>
+            <td>${formatDateTime(row.created_at)}</td>
+            <td>${row.video_id}</td>
+            <td>${behaviorText}</td>
+            <td>${objectText}</td>
+            <td>${riskBadge(row.risk_score)}</td>
+            <td>${actionBadge(row.action)}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    async function loadAnalysisDetail() {
+      try {
+        const response = await fetch(`${BASE_URL}/admin/analysis`, {
+          method: "GET",
+          headers: authHeaders()
+        });
+
+        if (!response.ok) throw new Error("분석 기록 조회 실패");
+
+        const result = await response.json();
+        const rows = result.data || [];
+
+        renderChart(rows);
+        renderTable(rows);
+      } catch (error) {
+        analysisTableBody.innerHTML = `<tr><td colspan="9">오류: ${error.message}</td></tr>`;
+      }
+    }
+
+    refreshBtn.addEventListener("click", loadAnalysisDetail);
+
+    adminBtn.addEventListener("click", () => {
+      window.location.href = "/frontend/admin.html";
+    });
+
+    mainBtn.addEventListener("click", () => {
+      window.location.href = "/frontend/index.html";
+    });
+
+    logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("loggedInUser");
+      alert("로그아웃 되었습니다.");
+      window.location.href = "/frontend/login.html";
+    });
+
+    loadAnalysisDetail();
+  </script>
+</body>
+</html>
