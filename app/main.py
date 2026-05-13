@@ -52,3 +52,10 @@ def root():
 @app.get("/health")
 def health():
     return {"message": "Server is running"}
+
+
+@app.get("/health/db")
+def database_health():
+    return {
+        "database": engine.url.get_backend_name()
+    }
