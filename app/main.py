@@ -46,7 +46,7 @@ app.include_router(cctv.router)
 
 @app.get("/")
 def root():
-    return FileResponse(FRONTEND_DIR / "index.html")
+    return FileResponse(FRONTEND_DIR / "login.html")
 
 
 @app.get("/health")
