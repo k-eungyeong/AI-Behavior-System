@@ -8,7 +8,6 @@ from sqlalchemy.orm import Session
 from app.database.connection import get_db
 from app.database.models import User
 from app.routers.auth import get_current_user
-from app.services.ai_service import run_ai_pipeline
 from app.services.db_service import save_analysis_result
 from app.services.model_service import calculate_risk_and_action
 from app.services.response_action_service import execute_response_action
@@ -43,6 +42,8 @@ async def analyze_video(
     current_user: User = Depends(get_current_user)
 ):
     try:
+        from app.services.ai_service import run_ai_pipeline
+
         video_id = extract_video_id(request.file_path)
 
         ai_result = run_ai_pipeline(request.file_path)

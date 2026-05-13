@@ -1,8 +1,6 @@
 from datetime import datetime, timedelta
 import uuid
 
-import cv2
-import numpy as np
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 from sqlalchemy.orm import Session
 
@@ -13,11 +11,6 @@ from app.services.db_service import save_analysis_result
 from app.services.model_service import calculate_risk_and_action
 from app.services.notification_service import send_discord_alert
 from app.services.rag_service import search_response_guide
-from app.services.object_detection_service import (
-    model,
-    DANGEROUS_CLASSES,
-    CONF_THRESHOLD
-)
 
 
 router = APIRouter(
@@ -67,6 +60,17 @@ async def realtime_detect(
     current_user: User = Depends(get_current_user)
 ):
     try:
+        import cv2
+        import numpy as np
+
+        from app.services.object_detection_service import (
+            get_model,
+            DANGEROUS_CLASSES,
+            CONF_THRESHOLD
+        )
+
+        model = get_model()
+
         contents = await file.read()
         np_arr = np.frombuffer(contents, np.uint8)
         frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)

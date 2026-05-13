@@ -21,7 +21,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from app.services.object_detection_service import detect_objects
 
 
 # =========================================================
@@ -78,36 +77,34 @@ device = torch.device(
 # 모델 로드
 # =========================================================
 
-model = LSTMClassifier().to(device)
-
-model.load_state_dict(
-    torch.load(MODEL_PATH, map_location=device)
-)
-
-model.eval()
-
-print("✅ LSTM 모델 로드 완료")
+model = None
+scaler = None
+pose = None
 
 
-# =========================================================
-# scaler 로드
-# =========================================================
+def load_behavior_assets():
+    global model, scaler, pose
 
-scaler = joblib.load(SCALER_PATH)
+    if model is None:
+        model = LSTMClassifier().to(device)
+        model.load_state_dict(
+            torch.load(MODEL_PATH, map_location=device)
+        )
+        model.eval()
+        print("LSTM model loaded")
 
-print("✅ scaler 로드 완료")
+    if scaler is None:
+        scaler = joblib.load(SCALER_PATH)
+        print("scaler loaded")
 
+    if pose is None:
+        pose = mp.solutions.pose.Pose(
+            static_image_mode=False,
+            min_detection_confidence=0.5
+        )
+        print("MediaPipe Pose initialized")
 
-# =========================================================
-# MediaPipe Pose 초기화
-# =========================================================
-
-pose = mp.solutions.pose.Pose(
-    static_image_mode=False,
-    min_detection_confidence=0.5
-)
-
-print("✅ MediaPipe Pose 초기화 완료")
+    return model, scaler, pose
 
 
 # =========================================================
@@ -115,6 +112,7 @@ print("✅ MediaPipe Pose 초기화 완료")
 # =========================================================
 
 def run_behavior_model(video_path: str):
+    model, scaler, pose = load_behavior_assets()
 
     cap = cv2.VideoCapture(video_path)
 
@@ -220,6 +218,8 @@ def run_behavior_model(video_path: str):
 # =========================================================
 
 def run_ai_pipeline(video_path: str):
+    from app.services.object_detection_service import detect_objects
+
 
     # 1. 행동 분석
     behavior_result, behavior_confidence = (

@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import cv2
-from ultralytics import YOLO
 
 
 # =========================================================
@@ -17,9 +16,19 @@ MODEL_PATH = BASE_DIR / "behavior" / "best.pt"
 # YOLO 모델 로드
 # =========================================================
 
-model = YOLO(str(MODEL_PATH))
+model = None
 
-print("✅ YOLO 모델 로드 완료")
+
+def get_model():
+    global model
+
+    if model is None:
+        from ultralytics import YOLO
+
+        model = YOLO(str(MODEL_PATH))
+        print("YOLO model loaded")
+
+    return model
 
 
 # =========================================================
@@ -47,6 +56,7 @@ CONF_THRESHOLD = 0.85
 # =========================================================
 
 def detect_objects(video_path: str):
+    model = get_model()
 
     cap = cv2.VideoCapture(video_path)
 
