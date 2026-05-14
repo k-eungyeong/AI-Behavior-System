@@ -1432,23 +1432,33 @@
     }
 
     function renderResult(data) {
+      const behaviorConfidence =
+        data.behavior_confidence !== null && data.behavior_confidence !== undefined
+          ? data.behavior_confidence
+          : "-";
+      const objectConfidence =
+        data.object_confidence !== null && data.object_confidence !== undefined
+          ? Number(data.object_confidence).toFixed(3)
+          : "-";
+      const riskScore = Number(data.risk_score || 0);
+
       behaviorResult.textContent =
         data.behavior_result === "abnormal" || data.behavior_result === 1
-          ? `이상 (${data.behavior_confidence})`
-          : `정상 (${data.behavior_confidence})`;
+          ? `이상 (${behaviorConfidence})`
+          : `정상 (${behaviorConfidence})`;
 
       objectResult.textContent = data.object_detected
-        ? `${data.object_label} (${Number(data.object_confidence).toFixed(3)})`
+        ? `${data.object_label || "감지됨"} (${objectConfidence})`
         : "위험 물체 없음";
 
       actionResult.textContent = actionLabel(data.action);
 
-      const status = getStatusInfo(Number(data.risk_score));
+      const status = getStatusInfo(riskScore);
       statusBadge.innerHTML = `<span class="${status.badgeClass}">${status.text}</span>`;
 
-      riskScoreText.textContent = data.risk_score;
-      gaugeFill.className = status.fillClass;
-      gaugeFill.style.width = `${Math.min(Number(data.risk_score), 100)}%`;
+      riskScoreText.textContent = data.risk_score ?? 0;
+      gaugeFill.className = `gauge-fill ${status.fillClass}`;
+      gaugeFill.style.width = `${Math.min(riskScore, 100)}%`;
 
       actionMessage.textContent = data.action_result || getActionMessage(data.action);
       resultJson.textContent = JSON.stringify(data, null, 2);
@@ -1459,7 +1469,7 @@
         ragGuideTitle.textContent = guideData.title || "대응 가이드";
         ragGuideList.innerHTML = "";
 
-        if (guideData.guide) {
+        if (Array.isArray(guideData.guide)) {
           guideData.guide.forEach(item => {
             const li = document.createElement("li");
             li.textContent = item;
@@ -1720,10 +1730,10 @@
 
         await sleep(2000);
 
+        showResultDashboard();
+        renderResult(analysisData);
         clearAnalysisState();
         statusText.textContent = "";
-        renderResult(analysisData);
-        showResultDashboard();
 
         if (
           analysisData.object_detected ||

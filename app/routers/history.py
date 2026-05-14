@@ -35,6 +35,8 @@ def get_history(
         data.append({
             "video_id": result.video_id,
             "user_id": result.user_id,
+            "camera_name": result.camera_name,
+            "camera_location": result.camera_location,
 
             "behavior_result": result.behavior_result,
             "behavior_confidence": result.behavior_confidence,
@@ -82,6 +84,8 @@ def get_history_detail(
         "data": {
             "video_id": result.video_id,
             "user_id": result.user_id,
+            "camera_name": result.camera_name,
+            "camera_location": result.camera_location,
 
             "behavior_result": result.behavior_result,
             "behavior_confidence": result.behavior_confidence,
