@@ -1490,7 +1490,33 @@
       }
     }
 
-    function historyRowToResult(row) {
+    async function fetchRagGuide(row) {
+      try {
+        const response = await fetch(`${BASE_URL}/rag/guide`, {
+          method: "POST",
+          headers: authHeaders({
+            "Content-Type": "application/json"
+          }),
+          body: JSON.stringify({
+            object_label: row.object_label,
+            behavior_result: row.behavior_result,
+            action: row.action,
+            risk_score: row.risk_score
+          })
+        });
+
+        if (!response.ok) return null;
+
+        const data = await response.json();
+        return data.rag_result || null;
+      } catch (error) {
+        return null;
+      }
+    }
+
+    async function historyRowToResult(row) {
+      const ragGuide = row.rag_guide || await fetchRagGuide(row);
+
       return {
         success: true,
         video_id: row.video_id,
@@ -1507,7 +1533,7 @@
         created_at: row.created_at,
         camera_name: row.camera_name,
         camera_location: row.camera_location,
-        rag_guide: row.rag_guide
+        rag_guide: ragGuide
       };
     }
 
@@ -1529,14 +1555,14 @@
       statusText.textContent = "선택한 분석 결과를 불러왔습니다. 영상 파일은 서버 재시작으로 사라졌을 수 있습니다.";
     }
 
-    function selectHistoryRow(index) {
+    async function selectHistoryRow(index) {
       const row = historyRows[index];
       if (!row) return;
 
       selectedHistoryVideoId = row.video_id;
       showHistoryVideo(row);
       showResultDashboard();
-      renderResult(historyRowToResult(row));
+      renderResult(await historyRowToResult(row));
       renderHistoryTable();
     }
 
