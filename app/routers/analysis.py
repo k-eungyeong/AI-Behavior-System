@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -42,11 +43,18 @@ async def analyze_video(
     current_user: User = Depends(get_current_user)
 ):
     try:
-        from app.services.ai_service import run_ai_pipeline
-
         video_id = extract_video_id(request.file_path)
 
-        ai_result = run_ai_pipeline(request.file_path)
+        analysis_mode = os.getenv("ANALYSIS_MODE", "full").lower()
+
+        if analysis_mode == "lightweight":
+            from app.services.lightweight_analysis_service import run_lightweight_pipeline
+
+            ai_result = run_lightweight_pipeline(request.file_path)
+        else:
+            from app.services.ai_service import run_ai_pipeline
+
+            ai_result = run_ai_pipeline(request.file_path)
 
         behavior_result = ai_result["behavior_result"]
         behavior_confidence = ai_result["behavior_confidence"]
@@ -118,6 +126,7 @@ async def analyze_video(
             "created_at": saved_result.created_at,
             "camera_name": saved_result.camera_name,
             "camera_location": saved_result.camera_location,
+            "analysis_mode": ai_result.get("analysis_mode", analysis_mode),
             "rag_guide": rag_guide,
         }
 
