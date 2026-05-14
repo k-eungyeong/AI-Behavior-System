@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -8,12 +10,22 @@ from app.services.db_service import (
     get_all_results,
     get_result_by_video_id
 )
+from app.services.file_service import get_uploaded_file_path
 
 
 router = APIRouter(
     prefix="/history",
     tags=["History"]
 )
+
+
+def get_video_url(video_id: str) -> str | None:
+    file_path = get_uploaded_file_path(video_id)
+
+    if not file_path:
+        return None
+
+    return f"/uploads/{Path(file_path).name}"
 
 
 @router.get("/")
@@ -34,6 +46,7 @@ def get_history(
     for result in results:
         data.append({
             "video_id": result.video_id,
+            "video_url": get_video_url(result.video_id),
             "user_id": result.user_id,
             "camera_name": result.camera_name,
             "camera_location": result.camera_location,
@@ -83,6 +96,7 @@ def get_history_detail(
         "success": True,
         "data": {
             "video_id": result.video_id,
+            "video_url": get_video_url(result.video_id),
             "user_id": result.user_id,
             "camera_name": result.camera_name,
             "camera_location": result.camera_location,

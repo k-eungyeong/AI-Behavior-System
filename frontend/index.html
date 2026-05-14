@@ -863,6 +863,14 @@
 
     tbody tr:hover td { background: #fafaf7; }
 
+    tbody tr.history-row {
+      cursor: pointer;
+    }
+
+    tbody tr.history-row.selected td {
+      background: #eef6ff;
+    }
+
     .muted {
       color: #6b6f76;
       font-size: 14px;
@@ -1247,6 +1255,7 @@
 
     let historyRows = [];
     let currentHistoryFilter = "all";
+    let selectedHistoryVideoId = null;
     let analysisTimer = null;
     let analysisStartedAt = null;
 
@@ -1481,6 +1490,55 @@
       }
     }
 
+    function historyRowToResult(row) {
+      return {
+        success: true,
+        video_id: row.video_id,
+        user_id: row.user_id,
+        behavior_result: row.behavior_result,
+        behavior_confidence: row.behavior_confidence,
+        object_detected: row.object_detected,
+        object_label: row.object_label,
+        object_confidence: row.object_confidence,
+        risk_score: row.risk_score,
+        status: row.risk_score >= 60 ? "danger" : row.risk_score >= 30 ? "warning" : "safe",
+        action: row.action,
+        action_result: getActionMessage(row.action),
+        created_at: row.created_at,
+        camera_name: row.camera_name,
+        camera_location: row.camera_location
+      };
+    }
+
+    function showHistoryVideo(row) {
+      videoIdText.textContent = `video_id: ${row.video_id}`;
+
+      if (row.video_url) {
+        const videoUrl = row.video_url.startsWith("http")
+          ? row.video_url
+          : `${window.location.origin}${row.video_url}`;
+
+        previewVideo.src = videoUrl;
+        previewVideo.load();
+        uploadArea.classList.add("has-video");
+        statusText.textContent = "선택한 분석 기록의 영상을 불러왔습니다.";
+        return;
+      }
+
+      statusText.textContent = "선택한 분석 결과를 불러왔습니다. 영상 파일은 서버 재시작으로 사라졌을 수 있습니다.";
+    }
+
+    function selectHistoryRow(index) {
+      const row = historyRows[index];
+      if (!row) return;
+
+      selectedHistoryVideoId = row.video_id;
+      showHistoryVideo(row);
+      showResultDashboard();
+      renderResult(historyRowToResult(row));
+      renderHistoryTable();
+    }
+
     async function uploadVideo(file) {
       const formData = new FormData();
       formData.append("file", file);
@@ -1612,9 +1670,9 @@
 
       return `
         <span class="admin-log-controls">
-          <button class="admin-log-btn" type="button" onclick="moveHistoryRow(${originalIndex}, -1)">↑</button>
-          <button class="admin-log-btn" type="button" onclick="moveHistoryRow(${originalIndex}, 1)">↓</button>
-          <button class="admin-log-btn admin-log-delete" type="button" onclick="deleteHistoryRow(${originalIndex})">삭제</button>
+          <button class="admin-log-btn" type="button" onclick="event.stopPropagation(); moveHistoryRow(${originalIndex}, -1)">↑</button>
+          <button class="admin-log-btn" type="button" onclick="event.stopPropagation(); moveHistoryRow(${originalIndex}, 1)">↓</button>
+          <button class="admin-log-btn admin-log-delete" type="button" onclick="event.stopPropagation(); deleteHistoryRow(${originalIndex})">삭제</button>
         </span>
       `;
     }
@@ -1648,9 +1706,11 @@
             ? Number(row.object_confidence).toFixed(3)
             : "-";
         const source = getSourceInfo(row);
+        const originalIndex = getOriginalHistoryIndex(row);
+        const selectedClass = selectedHistoryVideoId === row.video_id ? " selected" : "";
 
         return `
-          <tr>
+          <tr class="history-row${selectedClass}" onclick="selectHistoryRow(${originalIndex})">
             <td><span class="${source.className}">${source.text}</span></td>
             <td>${row.camera_name || "-"}</td>
             <td>${row.camera_location || "-"}</td>
