@@ -127,6 +127,7 @@ async def analyze_video(
             "camera_name": saved_result.camera_name,
             "camera_location": saved_result.camera_location,
             "analysis_mode": ai_result.get("analysis_mode", analysis_mode),
+            "analysis_details": ai_result.get("analysis_details"),
             "rag_guide": rag_guide,
         }
 
