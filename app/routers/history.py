@@ -11,6 +11,7 @@ from app.services.db_service import (
     get_result_by_video_id
 )
 from app.services.file_service import get_uploaded_file_path
+from app.services.rag_service import search_response_guide
 
 
 router = APIRouter(
@@ -26,6 +27,34 @@ def get_video_url(video_id: str) -> str | None:
         return None
 
     return f"/uploads/{Path(file_path).name}"
+
+
+def build_history_item(result):
+    return {
+        "video_id": result.video_id,
+        "video_url": get_video_url(result.video_id),
+        "user_id": result.user_id,
+        "camera_name": result.camera_name,
+        "camera_location": result.camera_location,
+
+        "behavior_result": result.behavior_result,
+        "behavior_confidence": result.behavior_confidence,
+
+        "object_detected": result.object_detected,
+        "object_label": result.object_label,
+        "object_confidence": result.object_confidence,
+
+        "risk_score": result.risk_score,
+        "action": result.action,
+
+        "created_at": result.created_at,
+        "rag_guide": search_response_guide(
+            object_label=result.object_label,
+            behavior_result=result.behavior_result,
+            action=result.action,
+            risk_score=result.risk_score,
+        ),
+    }
 
 
 @router.get("/")
@@ -44,25 +73,7 @@ def get_history(
     data = []
 
     for result in results:
-        data.append({
-            "video_id": result.video_id,
-            "video_url": get_video_url(result.video_id),
-            "user_id": result.user_id,
-            "camera_name": result.camera_name,
-            "camera_location": result.camera_location,
-
-            "behavior_result": result.behavior_result,
-            "behavior_confidence": result.behavior_confidence,
-
-            "object_detected": result.object_detected,
-            "object_label": result.object_label,
-            "object_confidence": result.object_confidence,
-
-            "risk_score": result.risk_score,
-            "action": result.action,
-
-            "created_at": result.created_at
-        })
+        data.append(build_history_item(result))
 
     return {
         "success": True,
@@ -94,23 +105,5 @@ def get_history_detail(
 
     return {
         "success": True,
-        "data": {
-            "video_id": result.video_id,
-            "video_url": get_video_url(result.video_id),
-            "user_id": result.user_id,
-            "camera_name": result.camera_name,
-            "camera_location": result.camera_location,
-
-            "behavior_result": result.behavior_result,
-            "behavior_confidence": result.behavior_confidence,
-
-            "object_detected": result.object_detected,
-            "object_label": result.object_label,
-            "object_confidence": result.object_confidence,
-
-            "risk_score": result.risk_score,
-            "action": result.action,
-
-            "created_at": result.created_at
-        }
+        "data": build_history_item(result)
     }
